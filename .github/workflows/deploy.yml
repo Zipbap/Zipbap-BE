@@ -31,16 +31,25 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # awscli 설치 확인
+            # AWS 자격 증명 파일 생성
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+            # awscli 설치 (없으면)
             if ! command -v aws &> /dev/null
             then
-              sudo apt-get update && sudo apt-get install -y awscli
+              sudo apt-get update && sudo apt-get install -y unzip curl
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -o awscliv2.zip
+              sudo ./aws/install
             fi
 
             # 최신 이미지 pull
             docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
 
-            # SSM Parameter Store에서 prod.yml 가져오기
+            # Parameter Store에서 prod.yml 가져오기
             aws ssm get-parameter \
               --name "/zipbap/prod/application-prod.yml" \
               --with-decryption \
