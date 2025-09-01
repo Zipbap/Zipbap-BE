@@ -1,0 +1,70 @@
+name: CI/CD to EC2 with Docker & SSM
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker 이미지 Build 및 Push
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-api
+          docker build -t $IMAGE_NAME:latest .
+          docker push $IMAGE_NAME:latest
+
+      - name: EC2에 배포
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # AWS 자격 증명 파일 생성
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+            # awscli 설치 (없으면)
+            if ! command -v aws &> /dev/null
+            then
+              sudo apt-get update && sudo apt-get install -y unzip curl
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -o awscliv2.zip
+              sudo ./aws/install
+            fi
+
+            # 최신 이미지 pull
+            docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+
+            # Parameter Store에서 prod.yml 가져오기
+            aws ssm get-parameter \
+              --name "/zipbap/prod/application-prod.yml" \
+              --with-decryption \
+              --region ap-northeast-2 \
+              --query "Parameter.Value" \
+              --output text > /home/ubuntu/application-prod.yml
+
+            # 기존 컨테이너 중단/삭제
+            docker stop zipbap-api || true
+            docker rm zipbap-api || true
+
+            # 새 컨테이너 실행
+            docker run -d \
+              --name zipbap-api \
+              -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
+              ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
