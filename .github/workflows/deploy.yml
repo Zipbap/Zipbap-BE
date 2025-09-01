@@ -71,3 +71,19 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
               ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+
+      - name: Discord 알림 (Success)
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\":\"✅ [배포 성공] zipbap-backend 서비스가 정상적으로 배포되었습니다! 🚀 (commit: ${{ github.sha }})\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Discord 알림 (Failure)
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\":\"❌ [배포 실패] zipbap-api 서비스 배포 중 문제가 발생했습니다. (commit: ${{ github.sha }})\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
