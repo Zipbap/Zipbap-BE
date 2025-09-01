@@ -7,6 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: |
+      github.repository == 'Kimxxunu/2025_SEASONTHON_TEAM_10_BE' ||
+      github.repository == 'wnd01jun/2025_SEASONTHON_TEAM_10_BE'
 
     steps:
       - name: 코드 체크아웃
