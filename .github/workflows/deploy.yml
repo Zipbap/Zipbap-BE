@@ -75,7 +75,8 @@ jobs:
       - name: Discord 알림 (Success)
         if: success()
         run: |
-          COMMIT_MSG="$(git log -1 --pretty=%B)"
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
@@ -86,8 +87,9 @@ jobs:
                    \"fields\": [
                      { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"성공 ✅\", \"inline\": true },
-                     { \"name\": \"Commit SHA\", \"value\": \"\`${{ github.sha.substring(0,7) }}\`\" },
-                     { \"name\": \"Commit 메시지\", \"value\": \"${COMMIT_MSG}\" }
+                     { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
+                     { \"name\": \"Commit 메시지\", \"value\": \"${COMMIT_MSG}\" },
+                     { \"name\": \"배포자\", \"value\": \"@${GITHUB_ACTOR}\", \"inline\": true }
                    ],
                    \"footer\": { \"text\": \"GitHub Actions • main 브랜치\" },
                    \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
@@ -98,19 +100,21 @@ jobs:
       - name: Discord 알림 (Failure)
         if: failure()
         run: |
-          COMMIT_MSG="$(git log -1 --pretty=%B)"
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
                  \"embeds\": [{
                    \"title\": \"❌ 배포 실패\",
-                   \"description\": \"zipbap-api 서비스 배포 중 문제가 발생했습니다.\",
+                   \"description\": \"zipbap-backend 서비스 배포 중 문제가 발생했습니다.\",
                    \"color\": 15158332,
                    \"fields\": [
                      { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"실패 ❌\", \"inline\": true },
-                     { \"name\": \"Commit SHA\", \"value\": \"\`${{ github.sha.substring(0,7) }}\`\" },
-                     { \"name\": \"Commit 메시지\", \"value\": \"${COMMIT_MSG}\" }
+                     { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
+                     { \"name\": \"Commit 메시지\", \"value\": \"${COMMIT_MSG}\" },
+                     { \"name\": \"배포자\", \"value\": \"@${GITHUB_ACTOR}\", \"inline\": true }
                    ],
                    \"footer\": { \"text\": \"GitHub Actions • main 브랜치\" },
                    \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
