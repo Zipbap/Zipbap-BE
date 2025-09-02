@@ -34,6 +34,13 @@ dependencies {
 	// JPA & Hibernate
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
+	// validation
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+
+	// Swagger
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
+
 	// MariaDB Driver (JDBC 연결)
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 
