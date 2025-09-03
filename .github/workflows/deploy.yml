@@ -60,13 +60,20 @@ jobs:
               --query "Parameter.Value" \
               --output text > /home/ubuntu/application-prod.yml
 
+            # 네트워크 생성 (없으면)
+            docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
+
+            # mariadb 컨테이너가 네트워크에 붙어있는지 확인 후 연결
+            docker network connect zipbap-net mariadb || true
+
             # 기존 컨테이너 중단/삭제
             docker stop zipbap-api || true
             docker rm zipbap-api || true
 
-            # 새 컨테이너 실행
+            # 새 컨테이너 실행 (네트워크 지정 필수)
             docker run -d \
               --name zipbap-api \
+              --network zipbap-net \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
@@ -75,8 +82,11 @@ jobs:
       - name: Discord 알림 (Success)
         if: success()
         run: |
+          sudo apt-get install -y jq
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          # 커밋 메시지 안전 escape
+          COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
+
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
@@ -88,7 +98,7 @@ jobs:
                      { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"성공 ✅\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
-                     { \"name\": \"Commit 메시지\", \"value\": \"${COMMIT_MSG}\" },
+                     { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
                      { \"name\": \"배포자\", \"value\": \"@${GITHUB_ACTOR}\", \"inline\": true }
                    ],
                    \"footer\": { \"text\": \"GitHub Actions • main 브랜치\" },
@@ -100,8 +110,10 @@ jobs:
       - name: Discord 알림 (Failure)
         if: failure()
         run: |
+          sudo apt-get install -y jq
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
+
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
@@ -113,7 +125,7 @@ jobs:
                      { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"실패 ❌\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
-                     { \"name\": \"Commit 메시지\", \"value\": \"${COMMIT_MSG}\" },
+                     { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
                      { \"name\": \"배포자\", \"value\": \"@${GITHUB_ACTOR}\", \"inline\": true }
                    ],
                    \"footer\": { \"text\": \"GitHub Actions • main 브랜치\" },
