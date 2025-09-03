@@ -1,4 +1,4 @@
-package zipbap.app.config
+package zipbap.app.global.config
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
