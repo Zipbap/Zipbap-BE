@@ -25,7 +25,11 @@ enum class ErrorStatus(
 
     // 요리 주재료 에러
     MAIN_INGREDIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "MAIN_INGREDIENT404", "해당 요리 주재료를 찾을 수 없습니다."),
-    DUPLICATE_MAIN_INGREDIENT(HttpStatus.CONFLICT, "MAIN_INGREDIENT409", "이미 존재하는 요리 주재료입니다.");
+    DUPLICATE_MAIN_INGREDIENT(HttpStatus.CONFLICT, "MAIN_INGREDIENT409", "이미 존재하는 요리 주재료입니다."),
+
+    // 요리 방법
+    METHOD_NOT_FOUND(HttpStatus.NOT_FOUND, "METHOD404", "해당 요리 방법을 찾을 수 없습니다."),
+    DUPLICATE_METHOD(HttpStatus.CONFLICT, "METHOD409", "이미 존재하는 요리 방법입니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)
