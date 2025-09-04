@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
@@ -13,6 +14,7 @@ import zipbap.app.admin.category.cookingtype.dto.CookingTypeResponseDto
 import zipbap.app.global.ApiResponse
 
 @RequestMapping("/admin/cooking-types")
+@Tag(name = "Cooking Type", description = "요리 종류 관리 API")
 interface CookingTypeDocs {
 
     @Operation(summary = "요리 종류 등록", description = "새로운 요리 종류를 등록합니다.")
