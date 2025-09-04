@@ -41,7 +41,11 @@ enum class ErrorStatus(
 
     // 요리 난이도
     LEVEL_NOT_FOUND(HttpStatus.NOT_FOUND, "LEVEL404", "해당 난이도를 찾을 수 없습니다."),
-    DUPLICATE_LEVEL(HttpStatus.CONFLICT, "LEVEL409", "이미 존재하는 난이도입니다.");
+    DUPLICATE_LEVEL(HttpStatus.CONFLICT, "LEVEL409", "이미 존재하는 난이도입니다."),
+
+    // 내 카테고리 (사용자 전용 카테고리)
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY404", "해당 '내 카테고리'를 찾을 수 없습니다."),
+    DUPLICATE_CATEGORY(HttpStatus.CONFLICT, "CATEGORY409", "이미 존재하는 '내 카테고리'입니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)

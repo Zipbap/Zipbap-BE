@@ -19,8 +19,8 @@ class MyCategory(
         var name: String,
 
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long? = null
+        @Column(name = "id", length = 30)
+        val id: String
 
 ) : BaseEntity() {
 }
