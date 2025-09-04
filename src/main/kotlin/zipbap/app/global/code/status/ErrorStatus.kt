@@ -33,7 +33,11 @@ enum class ErrorStatus(
 
     // 인분(인원수)
     HEADCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "HEADCOUNT404", "해당 인분을 찾을 수 없습니다."),
-    DUPLICATE_HEADCOUNT(HttpStatus.CONFLICT, "HEADCOUNT409", "이미 존재하는 인분입니다.");
+    DUPLICATE_HEADCOUNT(HttpStatus.CONFLICT, "HEADCOUNT409", "이미 존재하는 인분입니다."),
+
+    // 요리 시간
+    COOKING_TIME_NOT_FOUND(HttpStatus.NOT_FOUND, "COOKING_TIME404", "해당 요리 시간을 찾을 수 없습니다."),
+    DUPLICATE_COOKING_TIME(HttpStatus.CONFLICT, "COOKING_TIME409", "이미 존재하는 요리 시간입니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)
