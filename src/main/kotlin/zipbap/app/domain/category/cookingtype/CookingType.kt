@@ -1,7 +1,7 @@
 package zipbap.app.domain.category.cookingtype
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
+import zipbap.app.domain.base.BaseEntity
 
 @Entity
 @Table(name = "category_cooking_type")

@@ -1,16 +1,16 @@
-package zipbap.api.domain.recipe
+package zipbap.app.domain.recipe
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.category.cookingtime.CookingTime
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.category.cookingtime.CookingTime
 import zipbap.app.domain.category.cookingtype.CookingType
-import zipbap.api.domain.category.headcount.Headcount
-import zipbap.api.domain.category.level.Level
-import zipbap.api.domain.category.mainingredient.MainIngredient
-import zipbap.api.domain.category.method.Method
-import zipbap.api.domain.category.mycategory.MyCategory
-import zipbap.api.domain.category.situation.Situation
-import zipbap.api.domain.user.User
+import zipbap.app.domain.category.headcount.Headcount
+import zipbap.app.domain.category.level.Level
+import zipbap.app.domain.category.mainingredient.MainIngredient
+import zipbap.app.domain.category.method.Method
+import zipbap.app.domain.category.mycategory.MyCategory
+import zipbap.app.domain.category.situation.Situation
+import zipbap.app.domain.user.User
 
 @Entity
 @Table(name = "recipe", indexes = [

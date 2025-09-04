@@ -1,8 +1,8 @@
-package zipbap.api.domain.follow
+package zipbap.app.domain.follow
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.user.User
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.user.User
 
 @Entity
 @Table(uniqueConstraints = [

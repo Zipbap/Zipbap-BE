@@ -1,9 +1,9 @@
-package zipbap.api.domain.comment
+package zipbap.app.domain.comment
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.recipe.Recipe
-import zipbap.api.domain.user.User
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.recipe.Recipe
+import zipbap.app.domain.user.User
 
 @Entity
 @Table(name = "comment", indexes = [

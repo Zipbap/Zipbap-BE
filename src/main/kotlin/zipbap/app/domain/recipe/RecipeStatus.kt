@@ -1,4 +1,4 @@
-package zipbap.api.domain.recipe
+package zipbap.app.domain.recipe
 
 enum class RecipeStatus {
     TEMPORARY, ACTIVE

@@ -1,8 +1,8 @@
-package zipbap.api.domain.cookingorder
+package zipbap.app.domain.cookingorder
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.recipe.Recipe
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.recipe.Recipe
 
 @Entity
 @Table(name = "cooking_order", uniqueConstraints = [
