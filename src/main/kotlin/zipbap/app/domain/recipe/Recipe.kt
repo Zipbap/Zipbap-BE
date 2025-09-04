@@ -31,8 +31,8 @@ class Recipe(
         var introduction: String,
 
         @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "my_category_id", nullable = false)
-        var myCategory: MyCategory,
+        @JoinColumn(name = "my_category_id", nullable = true)
+        var myCategory: MyCategory? = null,
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "category_cooking_type_id", nullable = false)
