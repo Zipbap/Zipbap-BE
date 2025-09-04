@@ -1,8 +1,8 @@
-package zipbap.api.domain.category.mycategory
+package zipbap.app.domain.category.mycategory
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.user.User
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.user.User
 
 @Entity
 @Table(name = "my_category",

@@ -1,7 +1,7 @@
-package zipbap.api.domain.category.situation
+package zipbap.app.domain.category.situation
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
+import zipbap.app.domain.base.BaseEntity
 
 @Entity
 @Table(name = "category_situation")

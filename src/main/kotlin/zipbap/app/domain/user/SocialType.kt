@@ -1,4 +1,4 @@
-package zipbap.api.domain.user
+package zipbap.app.domain.user
 
 enum class SocialType {
     KAKAO, APPLE

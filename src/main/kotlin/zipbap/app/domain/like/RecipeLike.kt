@@ -1,9 +1,9 @@
-package zipbap.api.domain.like
+package zipbap.app.domain.like
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.recipe.Recipe
-import zipbap.api.domain.user.User
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.recipe.Recipe
+import zipbap.app.domain.user.User
 
 /*
     좋아요 수 counting을 위한 index 적용입니다!

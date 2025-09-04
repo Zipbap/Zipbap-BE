@@ -1,7 +1,7 @@
-package zipbap.api.domain.user
+package zipbap.app.domain.user
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
+import zipbap.app.domain.base.BaseEntity
 
 @Entity
 class User(

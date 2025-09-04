@@ -1,9 +1,9 @@
-package zipbap.api.domain.bookmark
+package zipbap.app.domain.bookmark
 
 import jakarta.persistence.*
-import zipbap.api.domain.base.BaseEntity
-import zipbap.api.domain.recipe.Recipe
-import zipbap.api.domain.user.User
+import zipbap.app.domain.base.BaseEntity
+import zipbap.app.domain.recipe.Recipe
+import zipbap.app.domain.user.User
 
 /*
     개인 북마크 조회, 북마크 count query 시 index가 있으면 좋을거 같아서 추가했습니다.
