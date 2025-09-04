@@ -3,7 +3,7 @@ package zipbap.api.domain.recipe
 import jakarta.persistence.*
 import zipbap.api.domain.base.BaseEntity
 import zipbap.api.domain.category.cookingtime.CookingTime
-import zipbap.api.domain.category.cookingtype.CookingType
+import zipbap.app.domain.category.cookingtype.CookingType
 import zipbap.api.domain.category.headcount.Headcount
 import zipbap.api.domain.category.level.Level
 import zipbap.api.domain.category.mainingredient.MainIngredient
