@@ -31,13 +31,17 @@ enum class ErrorStatus(
     METHOD_NOT_FOUND(HttpStatus.NOT_FOUND, "METHOD404", "해당 요리 방법을 찾을 수 없습니다."),
     DUPLICATE_METHOD(HttpStatus.CONFLICT, "METHOD409", "이미 존재하는 요리 방법입니다."),
 
-    // 인분(인원수)
+    // 요리 인분(인원수)
     HEADCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "HEADCOUNT404", "해당 인분을 찾을 수 없습니다."),
     DUPLICATE_HEADCOUNT(HttpStatus.CONFLICT, "HEADCOUNT409", "이미 존재하는 인분입니다."),
 
     // 요리 시간
     COOKING_TIME_NOT_FOUND(HttpStatus.NOT_FOUND, "COOKING_TIME404", "해당 요리 시간을 찾을 수 없습니다."),
-    DUPLICATE_COOKING_TIME(HttpStatus.CONFLICT, "COOKING_TIME409", "이미 존재하는 요리 시간입니다.");
+    DUPLICATE_COOKING_TIME(HttpStatus.CONFLICT, "COOKING_TIME409", "이미 존재하는 요리 시간입니다."),
+
+    // 요리 난이도
+    LEVEL_NOT_FOUND(HttpStatus.NOT_FOUND, "LEVEL404", "해당 난이도를 찾을 수 없습니다."),
+    DUPLICATE_LEVEL(HttpStatus.CONFLICT, "LEVEL409", "이미 존재하는 난이도입니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)
