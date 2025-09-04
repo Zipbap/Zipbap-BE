@@ -1,5 +1,6 @@
 package zipbap.app.admin.category.situation.controller
 
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 import zipbap.app.admin.category.situation.dto.SituationRequestDto
 import zipbap.app.admin.category.situation.dto.SituationResponseDto
@@ -8,6 +9,7 @@ import zipbap.app.global.ApiResponse
 
 @RestController
 @RequestMapping("/admin/situations")
+@Tag(name = "Cooking situations", description = "요리 상황 관리 API")
 class SituationController(
     private val situationService: SituationService
 ) {
