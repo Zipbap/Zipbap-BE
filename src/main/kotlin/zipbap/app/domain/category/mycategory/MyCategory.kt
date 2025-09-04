@@ -20,7 +20,7 @@ class MyCategory(
 
         @Id
         @Column(name = "id", length = 30)
-        val id: String
+        val id: String // MC-{userId}-{sequence}
 
 ) : BaseEntity() {
 }

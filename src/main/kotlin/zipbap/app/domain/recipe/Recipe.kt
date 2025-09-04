@@ -80,8 +80,9 @@ class Recipe(
         @Column(name = "recipe_status", nullable = false)
         var recipeStatus: RecipeStatus,
 
+
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long? = null
+        @Column(name = "id", length = 40)
+        val id: String,  // RC-{userId}-{sequence}
 ) : BaseEntity() {
 }
