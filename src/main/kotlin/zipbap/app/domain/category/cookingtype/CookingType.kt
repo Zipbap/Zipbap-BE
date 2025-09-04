@@ -1,4 +1,4 @@
-package zipbap.api.domain.category.cookingtype
+package zipbap.app.domain.category.cookingtype
 
 import jakarta.persistence.*
 import zipbap.api.domain.base.BaseEntity
@@ -7,12 +7,13 @@ import zipbap.api.domain.base.BaseEntity
 @Table(name = "category_cooking_type")
 class CookingType(
 
-        @Column(name = "type", nullable = false,
-                length = 50, unique = true)
-        val type: String,
-
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long? = null
+        val id: Long? = null,
+
+        @Column(name = "type", nullable = false,
+                length = 50, unique = true)
+        val type: String
+
 ) : BaseEntity() {
 }

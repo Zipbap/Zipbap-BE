@@ -13,7 +13,10 @@ enum class ErrorStatus(
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON400", "잘못된 요청입니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON401", "인증이 필요합니다."),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT404", "결제 수단을 찾을 수 없습니다."),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다.");
+    FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
+
+    COOKING_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "COOKING_TYPE404", "해당 요리 유형을 찾을 수 없습니다."),
+    DUPLICATE_COOKING_TYPE(HttpStatus.CONFLICT, "COOKING_TYPE409", "이미 존재하는 요리 유형입니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)
