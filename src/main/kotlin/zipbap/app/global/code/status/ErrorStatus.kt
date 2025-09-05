@@ -55,6 +55,10 @@ enum class ErrorStatus(
     DUPLICATE_COOKING_ORDER_TURN(HttpStatus.BAD_REQUEST, "COOKING_ORDER400", "조리 순서(turn) 값이 중복되었습니다."),
     RECIPE_ALREADY_FINALIZED(HttpStatus.CONFLICT, "RECIPE409", "이미 최종 저장된 레시피입니다."),
 
+    // 좋아요 관련 에러
+    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "LIKE404", "해당 좋아요를 찾을 수 없습니다."),
+    ALREADY_LIKED_RECIPE(HttpStatus.CONFLICT, "LIKE409", "이미 좋아요를 누른 레시피입니다."),
+
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION401", "인증에 실패했습니다."),
     OAUTH2_LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN401", "OAuth2 Login 과정에서 에러가 발생했습니다."),
     INVALID_REGISTRATION(HttpStatus.BAD_REQUEST, "REGISTRATION400", "잘못된 REGISTRATION입니다."),
