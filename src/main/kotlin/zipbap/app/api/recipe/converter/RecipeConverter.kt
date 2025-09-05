@@ -50,6 +50,7 @@ object RecipeConverter {
         Recipe(
             id = id,
             user = user,
+            thumbnail = dto.thumbnail,
             title = dto.title,
             subtitle = dto.subtitle,
             introduction = dto.introduction,
@@ -114,6 +115,7 @@ object RecipeConverter {
     ): RecipeResponseDto.RecipeDetailResponseDto =
         RecipeResponseDto.RecipeDetailResponseDto(
             id = recipe.id,
+            thumbnail = recipe.thumbnail!!,
             title = recipe.title!!,
             subtitle = recipe.subtitle!!,
             introduction = recipe.introduction!!,
@@ -147,6 +149,7 @@ object RecipeConverter {
     ): RecipeResponseDto.TempRecipeDetailResponseDto =
         RecipeResponseDto.TempRecipeDetailResponseDto(
             id = recipe.id,
+            thumbnail = recipe.thumbnail,
             title = recipe.title,
             subtitle = recipe.subtitle,
             introduction = recipe.introduction,

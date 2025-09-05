@@ -2,7 +2,6 @@ package zipbap.app.api.recipe.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import zipbap.app.api.file.service.PresignedUrlProvider
 import zipbap.app.api.recipe.converter.RecipeConverter
 import zipbap.app.api.recipe.dto.RecipeRequestDto
 import zipbap.app.api.recipe.dto.RecipeResponseDto
@@ -71,6 +70,7 @@ class RecipeService(
 
         // 레시피 기본 필드 업데이트
         recipe.apply {
+            thumbnail = dto.thumbnail ?: thumbnail
             title = dto.title ?: title
             subtitle = dto.subtitle ?: subtitle
             introduction = dto.introduction ?: introduction
@@ -119,6 +119,7 @@ class RecipeService(
 
         // 레시피 엔티티 업데이트
         recipe.apply {
+            thumbnail = dto.thumbnail
             title = dto.title
             subtitle = dto.subtitle
             introduction = dto.introduction

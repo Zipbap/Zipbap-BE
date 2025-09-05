@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component
 import zipbap.app.api.auth.domain.oauth2user.entity.ProviderUser
 import zipbap.app.api.auth.domain.token.service.TokenResponseWriter
 import zipbap.app.api.auth.domain.token.service.TokenService
+import zipbap.app.domain.user.UserRepository
 import zipbap.app.global.code.status.ErrorStatus
 import zipbap.app.global.exception.GeneralException
 import java.io.IOException
@@ -19,24 +20,29 @@ import java.io.IOException
 @Component
 class CustomSuccessHandler(
     private val tokenService: TokenService,
-
-    private val tokenResponseWriter: TokenResponseWriter
-
+    private val tokenResponseWriter: TokenResponseWriter,
+    private val userRepository: UserRepository
 ) : AuthenticationSuccessHandler {
 
-
     @Throws(IOException::class, ServletException::class)
-    override fun onAuthenticationSuccess(request: HttpServletRequest, response: HttpServletResponse,
-                                         authentication: Authentication) {
-        val principal: ProviderUser = authentication.principal.takeIf {
-            it is ProviderUser
-        } as? ProviderUser ?: throw GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR)
+    override fun onAuthenticationSuccess(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication
+    ) {
+        val principal: ProviderUser = authentication.principal.takeIf { it is ProviderUser }
+                as? ProviderUser ?: throw GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR)
 
         val email: String = principal.email
-                ?: throw GeneralException(ErrorStatus.FORBIDDEN)
+            ?: throw GeneralException(ErrorStatus.FORBIDDEN)
 
-        val accessToken: String = tokenService.generateAccessToken(email)
-        val refreshToken: String = tokenService.generateRefreshToken(email)
+        // email로 User 조회 후 userId 기반 토큰 발급
+        val user = userRepository.findByEmail(email).orElseThrow {
+            GeneralException(ErrorStatus.USER_NOT_FOUND)
+        }
+
+        val accessToken: String = tokenService.generateAccessToken(user)
+        val refreshToken: String = tokenService.generateRefreshToken(user)
 
         tokenResponseWriter.write(response, accessToken, refreshToken)
         clearAuthenticationAttributes(request)
