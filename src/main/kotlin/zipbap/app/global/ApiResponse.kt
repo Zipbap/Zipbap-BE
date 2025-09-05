@@ -24,7 +24,7 @@ class ApiResponse<T>(
             return ApiResponse(true, code.reasonHttpStatus.code, code.reasonHttpStatus.message, result)
         }
 
-        fun <T> onFailure(code: String?, message: String?, data: T?): ApiResponse<T> {
+        fun <T> onFailure(code: String?, message: String?, data: T? = null): ApiResponse<T> {
             return ApiResponse(false, code, message, data)
         }
     }
