@@ -2,9 +2,11 @@ package zipbap.app.api.mycategory.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
+import zipbap.app.api.auth.resolver.UserInjection
 import zipbap.app.api.mycategory.dto.MyCategoryRequestDto
 import zipbap.app.api.mycategory.dto.MyCategoryResponseDto
 import zipbap.app.api.mycategory.service.MyCategoryService
+import zipbap.app.domain.user.User
 import zipbap.app.global.ApiResponse
 
 @RestController
@@ -17,32 +19,28 @@ class MyCategoryController(
     @PostMapping
     fun createMyCategory(
         @RequestBody dto: MyCategoryRequestDto.CreateMyCategoryDto,
-        @RequestParam("userId") userId: Long
+        @UserInjection user: User
     ): ApiResponse<MyCategoryResponseDto> =
-        ApiResponse.onSuccess(myCategoryService.createMyCategory(dto, userId))
-    // TODO: 추후 JWT 적용 시 userId 파라미터 제거 후, SecurityContext 에서 인증 사용자 정보 추출 예정
+        ApiResponse.onSuccess(myCategoryService.createMyCategory(dto, user.id!!))
 
     @PutMapping("/{id}")
     fun updateMyCategory(
         @PathVariable("id") id: String,
         @RequestBody dto: MyCategoryRequestDto.UpdateMyCategoryDto,
-        @RequestParam("userId") userId: Long
+        @UserInjection user: User
     ): ApiResponse<MyCategoryResponseDto> =
-        ApiResponse.onSuccess(myCategoryService.updateMyCategory(id, dto, userId))
-    // TODO: 추후 JWT 적용 시 userId 파라미터 제거 후, SecurityContext 에서 인증 사용자 정보 추출 예정
+        ApiResponse.onSuccess(myCategoryService.updateMyCategory(id, dto, user.id!!))
 
     @GetMapping
     fun getMyCategories(
-        @RequestParam("userId") userId: Long
+        @UserInjection user: User
     ): ApiResponse<List<MyCategoryResponseDto>> =
-        ApiResponse.onSuccess(myCategoryService.getMyCategories(userId))
-    // TODO: 추후 JWT 적용 시 userId 파라미터 제거 후, SecurityContext 에서 인증 사용자 정보 추출 예정
+        ApiResponse.onSuccess(myCategoryService.getMyCategories(user.id!!))
 
     @DeleteMapping("/{id}")
     fun deleteMyCategory(
         @PathVariable("id") id: String,
-        @RequestParam("userId") userId: Long
+        @UserInjection user: User
     ): ApiResponse<Unit> =
-        ApiResponse.onSuccess(myCategoryService.deleteMyCategory(id, userId))
-    // TODO: 추후 JWT 적용 시 userId 파라미터 제거 후, SecurityContext 에서 인증 사용자 정보 추출 예정
+        ApiResponse.onSuccess(myCategoryService.deleteMyCategory(id, user.id!!))
 }
