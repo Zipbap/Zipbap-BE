@@ -12,6 +12,9 @@ import zipbap.app.domain.category.mainingredient.MainIngredientRepository
 import zipbap.app.domain.category.method.MethodRepository
 import zipbap.app.domain.category.mycategory.MyCategoryRepository
 import zipbap.app.domain.category.situation.SituationRepository
+import zipbap.app.domain.user.UserRepository
+import zipbap.app.global.code.status.ErrorStatus
+import zipbap.app.global.exception.GeneralException
 
 @Service
 class CategoryService(
@@ -22,7 +25,8 @@ class CategoryService(
     private val mainIngredientRepository: MainIngredientRepository,
     private val methodRepository: MethodRepository,
     private val situationRepository: SituationRepository,
-    private val myCategoryRepository: MyCategoryRepository
+    private val myCategoryRepository: MyCategoryRepository,
+    private val userRepository: UserRepository
 ) {
 
     /**
@@ -34,6 +38,11 @@ class CategoryService(
      */
     @Transactional(readOnly = true)
     fun getAllCategories(userId: Long): CategoryResponseDto.CategoryListResponseDto {
+        // 해당 하는 ID 사용자가 존재 하지 않을 때
+        if (!userRepository.existsById(userId)) {
+            throw GeneralException(ErrorStatus.BAD_REQUEST)
+        }
+
         val cookingTimes = cookingTimeRepository.findAll()
         val cookingTypes = cookingTypeRepository.findAll()
         val headcounts = headcountRepository.findAll()

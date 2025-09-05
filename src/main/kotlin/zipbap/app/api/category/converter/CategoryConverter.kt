@@ -27,13 +27,13 @@ object CategoryConverter {
         myCategories: List<MyCategory>
     ): CategoryResponseDto.CategoryListResponseDto =
         CategoryResponseDto.CategoryListResponseDto(
-            cookingTimes = cookingTimes.map { it.cookingTime },
-            cookingTypes = cookingTypes.map { it.type },
-            headcounts = headcounts.map { it.headcount },
-            levels = levels.map { it.level },
-            mainIngredients = mainIngredients.map { it.ingredient },
-            methods = methods.map { it.method },
-            situations = situations.map { it.situation },
-            myCategories = myCategories.map { it.name }
+            cookingTimes = cookingTimes.map { CategoryResponseDto.CategoryItemDto(it.id, it.cookingTime) },
+            cookingTypes = cookingTypes.map { CategoryResponseDto.CategoryItemDto(it.id, it.type) },
+            headcounts = headcounts.map { CategoryResponseDto.CategoryItemDto(it.id, it.headcount) },
+            levels = levels.map { CategoryResponseDto.CategoryItemDto(it.id, it.level) },
+            mainIngredients = mainIngredients.map { CategoryResponseDto.CategoryItemDto(it.id, it.ingredient) },
+            methods = methods.map { CategoryResponseDto.CategoryItemDto(it.id, it.method) },
+            situations = situations.map { CategoryResponseDto.CategoryItemDto(it.id, it.situation) },
+            myCategories = myCategories.map { CategoryResponseDto.MyCategoryItemDto(it.id, it.name) }
         )
 }
