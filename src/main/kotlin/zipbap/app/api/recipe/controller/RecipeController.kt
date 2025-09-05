@@ -29,7 +29,7 @@ class RecipeController(
     override fun finalizeRecipe(
         recipeId: String,
         userId: Long,
-        request: RecipeRequestDto.finalizeRecipeRequestDto
+        request: RecipeRequestDto.FinalizeRecipeRequestDto
     ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto> =
         ApiResponse.onSuccess(recipeService.finalizeRecipe(recipeId, userId, request))
     // TODO: 추후 JWT 적용 시 userId 파라미터 제거 후, SecurityContext 에서 인증 사용자 정보 추출 예정

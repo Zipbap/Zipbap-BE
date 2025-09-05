@@ -11,7 +11,7 @@ object RecipeRequestDto {
      * 레시피 최종 등록 요청 DTO
      * 모든 필드 필수
      */
-    data class finalizeRecipeRequestDto(
+    data class FinalizeRecipeRequestDto(
 
         @Schema(description = "레시피 제목", example = "소고기 미역국", required = true)
         val title: String,

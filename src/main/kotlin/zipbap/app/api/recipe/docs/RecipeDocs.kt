@@ -70,7 +70,7 @@ interface RecipeDocs {
     fun finalizeRecipe(
         @PathVariable("recipeId") recipeId: String,
         @RequestParam("userId") userId: Long,
-        @RequestBody request: RecipeRequestDto.finalizeRecipeRequestDto
+        @RequestBody request: RecipeRequestDto.FinalizeRecipeRequestDto
     ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto>
 
 
