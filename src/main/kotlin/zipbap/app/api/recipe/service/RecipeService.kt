@@ -203,4 +203,50 @@ class RecipeService(
             }
         }
     }
+
+    /**
+     * 레시피 단일 조회 (본인 소유 & ACTIVE만)
+     */
+    @Transactional(readOnly = true)
+    fun getRecipeDetail(
+        recipeId: String,
+        userId: Long
+    ): RecipeResponseDto.RecipeDetailResponseDto {
+        val recipe = recipeRepository.findById(recipeId)
+            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+
+        if (recipe.user.id != userId) {
+            throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
+        }
+        if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
+            // 기획 상 ACTIVE만 상세 조회 허용
+            throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
+        }
+
+        val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+        return RecipeConverter.toDto(recipe, orders)
+    }
+
+    /**
+     * 내 ACTIVE 레시피 목록 조회 (다중 myCategory 필터)
+     * - myCategoryIds가 null/빈 리스트면 전체 ACTIVE 반환
+     * - 값이 있으면 myCategory.id IN (...) 필터
+     */
+    @Transactional(readOnly = true)
+    fun getMyActiveRecipesFiltered(
+        userId: Long,
+        myCategoryIds: List<String>?
+    ): List<RecipeResponseDto.MyRecipeListItemResponseDto> {
+        val recipes = if (myCategoryIds.isNullOrEmpty()) {
+            recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
+        } else {
+            recipeRepository.findAllByUserIdAndRecipeStatusAndMyCategoryIdIn(
+                userId,
+                RecipeStatus.ACTIVE,
+                myCategoryIds.toSet()
+            )
+        }
+
+        return recipes.map { RecipeConverter.toListItemDto(it) }
+    }
 }
