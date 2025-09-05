@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
 @SpringBootApplication
-@EntityScan(basePackages = ["zipbap.app.domain", "zipbap.api.domain"])
-@EnableJpaRepositories(basePackages = ["zipbap.app.domain"])
+@EntityScan(basePackages = ["zipbap.app.domain", "zipbap.api.domain", "zipbap.app.api"])
+@EnableJpaRepositories(basePackages = ["zipbap.app.domain", "zipbap.app.api"])
 @EnableJpaAuditing
 class ZipbapApiApplication
 
