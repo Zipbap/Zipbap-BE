@@ -2,11 +2,16 @@ package zipbap.app.api.recipe.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import zipbap.app.api.file.service.PresignedUrlProvider
 import zipbap.app.api.recipe.converter.RecipeConverter
 import zipbap.app.api.recipe.dto.RecipeRequestDto
 import zipbap.app.api.recipe.dto.RecipeResponseDto
 import zipbap.app.api.recipe.validator.CategoryValidator
 import zipbap.app.domain.cookingorder.CookingOrderRepository
+import zipbap.app.domain.file.FileEntity
+import zipbap.app.domain.file.FileRepository
+import zipbap.app.domain.file.FileStatus
+import zipbap.app.domain.recipe.Recipe
 import zipbap.app.domain.recipe.RecipeRepository
 import zipbap.app.domain.recipe.RecipeStatus
 import zipbap.app.domain.user.UserRepository
@@ -19,9 +24,13 @@ class RecipeService(
     private val recipeRepository: RecipeRepository,
     private val cookingOrderRepository: CookingOrderRepository,
     private val userRepository: UserRepository,
-    private val categoryValidator: CategoryValidator
+    private val categoryValidator: CategoryValidator,
+    private val fileRepository: FileRepository,
 ) {
 
+    /**
+     * 임시 레시피 생성
+     */
     @Transactional
     fun createTempRecipe(userId: Long): RecipeResponseDto.TempRecipeDetailResponseDto {
         if (!userRepository.existsById(userId)) {
@@ -38,6 +47,9 @@ class RecipeService(
         return RecipeConverter.toTempDto(savedRecipe, emptyList())
     }
 
+    /**
+     * 임시 레시피 수정
+     */
     @Transactional
     fun updateTempRecipe(
         dto: RecipeRequestDto.UpdateTempRecipeRequestDto,
@@ -47,32 +59,21 @@ class RecipeService(
         val recipe = recipeRepository.findById(recipeId)
             .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
 
-        if (recipe.user.id != userId) {
-            throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
-        }
+        if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
-        // 1) turn 중복 방지(요청 내부, null 제외)
-        val turns = dto.cookingOrders?.mapNotNull { it.turn } ?: emptyList()
-        if (turns.size != turns.distinct().size) {
-            throw GeneralException(ErrorStatus.DUPLICATE_COOKING_ORDER_TURN)
-        }
+        // 요청에서 사용된 파일 URL 수집
+        val usedFileUrls = mutableSetOf<String>()
+        dto.video?.let { usedFileUrls.add(it) }
+        dto.cookingOrders?.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
-        // 2) 카테고리 검증 (Update는 strict=false)
-        val categories = categoryValidator.validateAll(dto, strict = false)
+        // 파일 상태 업데이트 (임시 저장은 TEMPORARY_UPLOAD 유지)
+        updateFileStatuses(recipeId, usedFileUrls, FileStatus.TEMPORARY_UPLOAD, recipe)
 
-        // 3) 레시피 필드 업데이트 (TEMPORARY 유지)
+        // 레시피 기본 필드 업데이트
         recipe.apply {
             title = dto.title ?: title
             subtitle = dto.subtitle ?: subtitle
             introduction = dto.introduction ?: introduction
-            myCategory = categories.myCategory ?: myCategory
-            cookingType = categories.cookingType ?: cookingType
-            situation = categories.situation ?: situation
-            mainIngredient = categories.mainIngredient ?: mainIngredient
-            method = categories.method ?: method
-            headcount = categories.headcount ?: headcount
-            cookingTime = categories.cookingTime ?: cookingTime
-            level = categories.level ?: level
             ingredientInfo = dto.ingredientInfo ?: ingredientInfo
             video = dto.video ?: video
             kick = dto.kick ?: kick
@@ -81,48 +82,42 @@ class RecipeService(
 
         val savedRecipe = recipeRepository.save(recipe)
 
-        // 4) cookingOrders가 null이면 기존 순서 유지, [] 또는 리스트면 전체 교체
-        val savedOrders = if (dto.cookingOrders != null) {
-            cookingOrderRepository.deleteAllByRecipeId(recipeId)
-            cookingOrderRepository.flush()
-            val orderEntities = RecipeConverter.toEntityFromUpdate(savedRecipe, dto.cookingOrders)
-            cookingOrderRepository.saveAll(orderEntities)
-        } else {
-            // 기존 조리 순서 유지
-            cookingOrderRepository.findAllByRecipeId(recipeId)
-        }
+        // cookingOrders 재저장
+        cookingOrderRepository.deleteAllByRecipeId(recipeId)
+        cookingOrderRepository.flush()
+        val orderEntities = dto.cookingOrders?.let {
+            RecipeConverter.toEntityFromUpdate(savedRecipe, it)
+        } ?: emptyList()
+        val savedOrders = cookingOrderRepository.saveAll(orderEntities)
 
         return RecipeConverter.toTempDto(savedRecipe, savedOrders)
     }
 
+    /**
+     * 최종 레시피 저장
+     */
     @Transactional
     fun finalizeRecipe(
         recipeId: String,
         userId: Long,
-        dto: RecipeRequestDto.finalizeRecipeRequestDto
+        dto: RecipeRequestDto.FinalizeRecipeRequestDto
     ): RecipeResponseDto.RecipeDetailResponseDto {
         val recipe = recipeRepository.findById(recipeId)
             .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
 
-        if (recipe.user.id != userId) {
-            throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
-        }
+        if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
-        // 이미 활성화된 레시피 재파이널 방지
-        if (recipe.recipeStatus == RecipeStatus.ACTIVE) {
-            throw GeneralException(ErrorStatus.RECIPE_ALREADY_FINALIZED)
-        }
-
-        // 요청 내 turn 중복 방지
-        val turns = dto.cookingOrders.map { it.turn }
-        if (turns.size != turns.distinct().size) {
-            throw GeneralException(ErrorStatus.DUPLICATE_COOKING_ORDER_TURN)
-        }
-
-        // 필수 카테고리/값 검증 (Finalize → strict = true)
         val categories = categoryValidator.validateAll(dto, strict = true)
 
-        // 레시피 필드 채우고 ACTIVE로 전환
+        // 요청에서 사용된 파일 URL 수집
+        val usedFileUrls = mutableSetOf<String>()
+        dto.video?.let { usedFileUrls.add(it) }
+        dto.cookingOrders.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
+
+        // 파일 상태 업데이트 (최종 저장은 FINALIZED 처리)
+        updateFileStatuses(recipeId, usedFileUrls, FileStatus.FINALIZED, recipe)
+
+        // 레시피 엔티티 업데이트
         recipe.apply {
             title = dto.title
             subtitle = dto.subtitle
@@ -144,17 +139,18 @@ class RecipeService(
 
         val savedRecipe = recipeRepository.save(recipe)
 
-        // 기존 조리 순서 삭제 → flush → 새로 삽입
+        // cookingOrders 재저장
         cookingOrderRepository.deleteAllByRecipeId(recipeId)
         cookingOrderRepository.flush()
-
         val orderEntities = RecipeConverter.toEntityFromRegister(savedRecipe, dto.cookingOrders)
         val savedOrders = cookingOrderRepository.saveAll(orderEntities)
 
         return RecipeConverter.toDto(savedRecipe, savedOrders)
     }
 
-
+    /**
+     * 임시 저장 레시피 조회
+     */
     @Transactional(readOnly = true)
     fun getMyTempRecipes(userId: Long): List<RecipeResponseDto.TempRecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.TEMPORARY)
@@ -164,6 +160,9 @@ class RecipeService(
         }
     }
 
+    /**
+     * 최종 저장 레시피 조회
+     */
     @Transactional(readOnly = true)
     fun getMyRecipes(userId: Long): List<RecipeResponseDto.RecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
@@ -173,4 +172,34 @@ class RecipeService(
         }
     }
 
+    /**
+     * 공통 파일 상태 업데이트 유틸
+     * - 사용되지 않는 파일 → UNTRACKED
+     * - 사용된 파일 → 주어진 targetStatus 로 업데이트
+     */
+    private fun updateFileStatuses(
+        recipeId: String,
+        usedFileUrls: Set<String>,
+        targetStatus: FileStatus,
+        recipe: Recipe
+    ) {
+        // 기존에 연결된 파일들
+        val attachedFiles = fileRepository.findAllByRecipeId(recipeId)
+
+        // 사용 안 된 파일은 UNTRACKED 처리
+        attachedFiles.filter { it.fileUrl !in usedFileUrls }.forEach { file: FileEntity ->
+            file.status = FileStatus.UNTRACKED
+            file.recipe = null
+            fileRepository.save(file)
+        }
+
+        // 사용된 파일은 targetStatus 로 변경
+        usedFileUrls.forEach { url ->
+            fileRepository.findByFileUrl(url)?.apply {
+                this.recipe = recipe
+                this.status = targetStatus
+                fileRepository.save(this)
+            }
+        }
+    }
 }

@@ -13,13 +13,10 @@ class PresignedUrlProvider(
 ) {
 
     /**
-     * Presigned URL 생성
-     *
-     * @param key 업로드할 파일 경로
-     * @param expirationMinutes URL 만료 시간 (기본 5분)
-     * @return 업로드 URL, 파일 접근 URL
+     * Presigned URL 생성 (임시 업로드 전용)
      */
-    fun generateUploadUrl(key: String, expirationMinutes: Int = 5): Map<String, String> {
+    fun generateUploadUrl(userId: Long, fileName: String, expirationMinutes: Int = 5): Map<String, String> {
+        val key = "temp/$userId/${UUID.randomUUID()}-$fileName"
         val expiration = Date(System.currentTimeMillis() + expirationMinutes * 60 * 1000)
 
         val uploadUrl = amazonS3.generatePresignedUrl(bucket, key, expiration, HttpMethod.PUT)
@@ -29,5 +26,27 @@ class PresignedUrlProvider(
             "uploadUrl" to uploadUrl.toString(),
             "fileUrl" to fileUrl
         )
+    }
+
+    /**
+     * temp → recipes 경로로 복사
+     * temp 파일은 삭제하지 않음
+     */
+    fun copyTempToRecipe(fileUrl: String, recipeId: String): String {
+        val sourceKey = extractKeyFromUrl(fileUrl)
+        if (!sourceKey.startsWith("temp/")) {
+            throw IllegalArgumentException("Source key must start with temp/: $sourceKey")
+        }
+
+        val targetKey = sourceKey.replaceFirst("temp/", "recipes/$recipeId/")
+
+        amazonS3.copyObject(bucket, sourceKey, bucket, targetKey)
+
+        return amazonS3.getUrl(bucket, targetKey).toString()
+    }
+
+    private fun extractKeyFromUrl(fileUrl: String): String {
+        val urlPrefix = amazonS3.getUrl(bucket, "").toString()
+        return fileUrl.removePrefix(urlPrefix)
     }
 }

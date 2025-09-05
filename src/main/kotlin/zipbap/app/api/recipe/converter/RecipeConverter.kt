@@ -37,7 +37,7 @@ object RecipeConverter {
     fun toEntity(
         id: String,
         user: User,
-        dto: RecipeRequestDto.finalizeRecipeRequestDto,
+        dto: RecipeRequestDto.FinalizeRecipeRequestDto,
         myCategory: MyCategory?,
         cookingType: CookingType,
         situation: Situation,
@@ -73,7 +73,7 @@ object RecipeConverter {
      */
     fun toEntityFromRegister(
         recipe: Recipe,
-        orders: List<RecipeRequestDto.finalizeRecipeRequestDto.CookingOrderRequest>
+        orders: List<RecipeRequestDto.FinalizeRecipeRequestDto.CookingOrderRequest>
     ): List<CookingOrder> =
         orders.sortedBy { it.turn }
             .map {
