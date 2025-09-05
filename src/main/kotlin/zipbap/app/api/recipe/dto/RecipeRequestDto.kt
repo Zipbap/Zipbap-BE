@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 object RecipeRequestDto {
 
-    data class CreateRecipeRequest(
+    data class RegisterRecipeRequestDto(
 
         @Schema(description = "레시피 제목", example = "소고기 미역국", required = true)
         val title: String,
@@ -15,7 +15,6 @@ object RecipeRequestDto {
         @Schema(description = "레시피 소개", example = "제 생일이면 늘 할머니가 끓여주신 추억의 레시피입니다.", required = true)
         val introduction: String,
 
-        // 카테고리 필드들 (ID만 받음)
         @Schema(description = "내 레시피(해당 사용자 전용)", example = "MC-1-00001")
         val myCategoryId: String? = null,
 

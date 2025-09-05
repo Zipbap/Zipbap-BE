@@ -17,10 +17,13 @@ import zipbap.app.domain.category.situation.Situation
 
 object RecipeConverter {
 
+    /**
+     * RegisterRecipeRequestDto -> Recipe Entity
+     */
     fun toEntity(
         id: String,
         user: User,
-        dto: RecipeRequestDto.CreateRecipeRequest,
+        dto: RecipeRequestDto.RegisterRecipeRequestDto,
         myCategory: MyCategory?,
         cookingType: CookingType,
         situation: Situation,
@@ -46,14 +49,17 @@ object RecipeConverter {
             level = level,
             ingredientInfo = dto.ingredientInfo,
             video = dto.video,
-            kick = dto.kick.orEmpty(),
+            kick = dto.kick,
             isPrivate = dto.isPrivate,
             recipeStatus = RecipeStatus.ACTIVE
         )
 
+    /**
+     * CookingOrderRequest List -> CookingOrder Entity List
+     */
     fun toCookingOrderEntities(
         recipe: Recipe,
-        orders: List<RecipeRequestDto.CreateRecipeRequest.CookingOrderRequest>
+        orders: List<RecipeRequestDto.RegisterRecipeRequestDto.CookingOrderRequest>
     ): List<CookingOrder> =
         orders.sortedBy { it.turn }
             .map {
@@ -65,29 +71,65 @@ object RecipeConverter {
                 )
             }
 
-    fun toCreateResponse(
+    /**
+     * Recipe Entity + CookingOrder List -> RecipeDetailResponseDto (최종 등록 레시피)
+     */
+    fun toDetailResponse(
         recipe: Recipe,
         orders: List<CookingOrder>
-    ): RecipeResponseDto.CreateRecipeResponse =
-        RecipeResponseDto.CreateRecipeResponse(
+    ): RecipeResponseDto.RecipeDetailResponseDto =
+        RecipeResponseDto.RecipeDetailResponseDto(
+            id = recipe.id,
+            title = recipe.title ?: "",
+            subtitle = recipe.subtitle ?: "",
+            introduction = recipe.introduction ?: "",
+            myCategoryId = recipe.myCategory?.id,
+            cookingTypeId = recipe.cookingType?.id ?: 0L,
+            situationId = recipe.situation?.id ?: 0L,
+            mainIngredientId = recipe.mainIngredient?.id ?: 0L,
+            methodId = recipe.method?.id ?: 0L,
+            headcountId = recipe.headcount?.id ?: 0L,
+            cookingTimeId = recipe.cookingTime?.id ?: 0L,
+            levelId = recipe.level?.id ?: 0L,
+            ingredientInfo = recipe.ingredientInfo ?: "",
+            kick = recipe.kick,
+            isPrivate = recipe.isPrivate,
+            video = recipe.video,
+            cookingOrders = orders.sortedBy { it.turn }.map {
+                RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse(
+                    turn = it.turn,
+                    image = it.image,
+                    description = it.description
+                )
+            }
+        )
+
+    /**
+     * Recipe Entity + CookingOrder List -> TempRecipeDetailResponseDto (임시 저장 레시피)
+     */
+    fun toTempDetailResponse(
+        recipe: Recipe,
+        orders: List<CookingOrder>
+    ): RecipeResponseDto.TempRecipeDetailResponseDto =
+        RecipeResponseDto.TempRecipeDetailResponseDto(
             id = recipe.id,
             title = recipe.title,
             subtitle = recipe.subtitle,
             introduction = recipe.introduction,
             myCategoryId = recipe.myCategory?.id,
-            cookingTypeId = recipe.cookingType.id!!,
-            situationId = recipe.situation.id!!,
-            mainIngredientId = recipe.mainIngredient.id!!,
-            methodId = recipe.method.id!!,
-            headcountId = recipe.headcount.id!!,
-            cookingTimeId = recipe.cookingTime.id!!,
-            levelId = recipe.level.id!!,
+            cookingTypeId = recipe.cookingType?.id,
+            situationId = recipe.situation?.id,
+            mainIngredientId = recipe.mainIngredient?.id,
+            methodId = recipe.method?.id,
+            headcountId = recipe.headcount?.id,
+            cookingTimeId = recipe.cookingTime?.id,
+            levelId = recipe.level?.id,
             ingredientInfo = recipe.ingredientInfo,
             kick = recipe.kick,
             isPrivate = recipe.isPrivate,
             video = recipe.video,
             cookingOrders = orders.sortedBy { it.turn }.map {
-                RecipeResponseDto.CreateRecipeResponse.CookingOrderResponse(
+                RecipeResponseDto.TempRecipeDetailResponseDto.CookingOrderResponse(
                     turn = it.turn,
                     image = it.image,
                     description = it.description

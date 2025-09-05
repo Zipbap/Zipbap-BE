@@ -24,12 +24,12 @@ interface RecipeDocs {
         SwaggerApiResponse(
             responseCode = "200",
             description = "레시피 작성 성공",
-            content = [Content(schema = Schema(implementation = RecipeResponseDto.CreateRecipeResponse::class))]
+            content = [Content(schema = Schema(implementation = RecipeResponseDto.RecipeDetailResponseDto::class))]
         )
     )
     @PostMapping
-    fun createRecipe(
-        @RequestBody request: RecipeRequestDto.CreateRecipeRequest,
+    fun registerRecipe(
+        @RequestBody request: RecipeRequestDto.RegisterRecipeRequestDto,
         @RequestParam("userId") userId: Long
-    ): ApiResponse<RecipeResponseDto.CreateRecipeResponse>
+    ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto>
 }
