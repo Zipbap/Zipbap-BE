@@ -119,10 +119,10 @@ class SecurityConfig(
     fun corsConfigurationSource(): CorsConfigurationSource {
         val config = CorsConfiguration().apply {
             allowedOrigins = listOf(
-                    "https://savepay.vercel.app",
+                    "https://zipbap.vercel.app",
                     "http://localhost:5173",
-                    "https://savepay.site",
-                    "https://www.savepay.site"
+                    "https://zipbap.store",
+                    "https://www.zipbap.store"
             )
             allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
             allowedHeaders = listOf("*")
