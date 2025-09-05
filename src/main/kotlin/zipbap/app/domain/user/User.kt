@@ -19,7 +19,7 @@ class User(
         val socialType: SocialType,
 
         @Column(name = "is_private", nullable = false)
-        var isPrivate: Boolean,
+        var isPrivate: Boolean = false,
 
         @Column(name = "profile_image")
         var profileImage: String? = null,
