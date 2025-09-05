@@ -41,7 +41,19 @@ enum class ErrorStatus(
 
     // 요리 난이도
     LEVEL_NOT_FOUND(HttpStatus.NOT_FOUND, "LEVEL404", "해당 난이도를 찾을 수 없습니다."),
-    DUPLICATE_LEVEL(HttpStatus.CONFLICT, "LEVEL409", "이미 존재하는 난이도입니다.");
+    DUPLICATE_LEVEL(HttpStatus.CONFLICT, "LEVEL409", "이미 존재하는 난이도입니다."),
+
+    // 내 카테고리 (사용자 전용 카테고리)
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY404", "해당 '내 카테고리'를 찾을 수 없습니다."),
+    DUPLICATE_CATEGORY(HttpStatus.CONFLICT, "CATEGORY409", "이미 존재하는 '내 카테고리'입니다."),
+
+    // 레시피
+    RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE404", "해당 레시피를 찾을 수 없습니다."),
+    RECIPE_FORBIDDEN(HttpStatus.FORBIDDEN, "RECIPE403", "해당 레시피에 대한 권한이 없습니다."),
+    INVALID_RECIPE_STATUS(HttpStatus.BAD_REQUEST, "RECIPE400", "레시피 상태가 유효하지 않습니다."),
+    RECIPE_BAD_REQUEST(HttpStatus.BAD_REQUEST, "RECIPE400", "잘못된 레시피 요청입니다."),
+    DUPLICATE_COOKING_ORDER_TURN(HttpStatus.BAD_REQUEST, "COOKING_ORDER400", "조리 순서(turn) 값이 중복되었습니다."),
+    RECIPE_ALREADY_FINALIZED(HttpStatus.CONFLICT, "RECIPE409", "이미 최종 저장된 레시피입니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)

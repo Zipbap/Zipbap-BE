@@ -23,7 +23,7 @@ class Bookmark(
         val recipe: Recipe,
 
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long? = null
+        @Column(name = "id", length = 40)
+        val id: String, // BM-{userId}-{sequence}
 ) : BaseEntity() {
 }
