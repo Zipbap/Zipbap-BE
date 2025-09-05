@@ -17,7 +17,12 @@ class CustomJwtFilter(
 
     @Throws(ServletException::class, IOException::class)
     protected override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        val header = request.getHeader("Authorization") ?: ""
+        val header = request.getHeader("Authorization")
+        if (header.isNullOrBlank()) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         val token = resolveBearerToken(header)
 
         if (token != null) {
