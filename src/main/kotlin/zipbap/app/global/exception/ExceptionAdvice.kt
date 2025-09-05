@@ -54,7 +54,7 @@ class ExceptionAdvice : ResponseEntityExceptionHandler() {
                     errors.merge(fieldName, errorMessage) { existingErrorMessage: String, newErrorMessage: String -> "$existingErrorMessage, $newErrorMessage" }
                 })
 
-        return handleExceptionInternalArgs(ex, HttpHeaders.EMPTY, ErrorStatus.valueOf("_BAD_REQUEST"), request, errors)
+        return handleExceptionInternalArgs(ex, HttpHeaders.EMPTY, ErrorStatus.BAD_REQUEST, request, errors)
     }
 
 
