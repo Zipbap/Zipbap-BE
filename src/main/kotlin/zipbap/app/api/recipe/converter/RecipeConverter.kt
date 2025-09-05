@@ -18,12 +18,26 @@ import zipbap.app.domain.category.situation.Situation
 object RecipeConverter {
 
     /**
-     * RegisterRecipeRequestDto -> Recipe Entity
+     * TempRecipe Entity 생성
+     */
+    fun toEntity(
+        id: String,
+        user: User
+    ): Recipe =
+        Recipe(
+            id = id,
+            user = user,
+            isPrivate = true,
+            recipeStatus = RecipeStatus.TEMPORARY
+        )
+
+    /**
+     * finalizeRecipeRequestDto -> Recipe Entity
      */
     fun toEntity(
         id: String,
         user: User,
-        dto: RecipeRequestDto.RegisterRecipeRequestDto,
+        dto: RecipeRequestDto.finalizeRecipeRequestDto,
         myCategory: MyCategory?,
         cookingType: CookingType,
         situation: Situation,
@@ -55,11 +69,11 @@ object RecipeConverter {
         )
 
     /**
-     * CookingOrderRequest List -> CookingOrder Entity List
+     * CookingOrderRequest (Finalize) -> CookingOrder Entity
      */
-    fun toCookingOrderEntities(
+    fun toEntityFromRegister(
         recipe: Recipe,
-        orders: List<RecipeRequestDto.RegisterRecipeRequestDto.CookingOrderRequest>
+        orders: List<RecipeRequestDto.finalizeRecipeRequestDto.CookingOrderRequest>
     ): List<CookingOrder> =
         orders.sortedBy { it.turn }
             .map {
@@ -72,26 +86,46 @@ object RecipeConverter {
             }
 
     /**
-     * Recipe Entity + CookingOrder List -> RecipeDetailResponseDto (최종 등록 레시피)
+     * CookingOrderRequest (Update Temp) -> CookingOrder Entity
      */
-    fun toDetailResponse(
+    fun toEntityFromUpdate(
+        recipe: Recipe,
+        orders: List<RecipeRequestDto.UpdateTempRecipeRequestDto.CookingOrderRequest>
+    ): List<CookingOrder> =
+        orders.filter { it.turn != null && it.description != null }
+            .groupBy { it.turn } // turn 기준 그룹화
+            .map { (_, group) -> group.last() } // 마지막 요청만 사용
+            .sortedBy { it.turn }
+            .map {
+                CookingOrder(
+                    recipe = recipe,
+                    image = it.image,
+                    description = it.description!!,
+                    turn = it.turn!!
+                )
+            }
+
+    /**
+     * Recipe + CookingOrder -> 최종 등록 레시피 DTO (모든 필드 확정)
+     */
+    fun toDto(
         recipe: Recipe,
         orders: List<CookingOrder>
     ): RecipeResponseDto.RecipeDetailResponseDto =
         RecipeResponseDto.RecipeDetailResponseDto(
             id = recipe.id,
-            title = recipe.title ?: "",
-            subtitle = recipe.subtitle ?: "",
-            introduction = recipe.introduction ?: "",
+            title = recipe.title!!,
+            subtitle = recipe.subtitle!!,
+            introduction = recipe.introduction!!,
             myCategoryId = recipe.myCategory?.id,
-            cookingTypeId = recipe.cookingType?.id ?: 0L,
-            situationId = recipe.situation?.id ?: 0L,
-            mainIngredientId = recipe.mainIngredient?.id ?: 0L,
-            methodId = recipe.method?.id ?: 0L,
-            headcountId = recipe.headcount?.id ?: 0L,
-            cookingTimeId = recipe.cookingTime?.id ?: 0L,
-            levelId = recipe.level?.id ?: 0L,
-            ingredientInfo = recipe.ingredientInfo ?: "",
+            cookingTypeId = recipe.cookingType!!.id!!,
+            situationId = recipe.situation!!.id!!,
+            mainIngredientId = recipe.mainIngredient!!.id!!,
+            methodId = recipe.method!!.id!!,
+            headcountId = recipe.headcount!!.id!!,
+            cookingTimeId = recipe.cookingTime!!.id!!,
+            levelId = recipe.level!!.id!!,
+            ingredientInfo = recipe.ingredientInfo!!,
             kick = recipe.kick,
             isPrivate = recipe.isPrivate,
             video = recipe.video,
@@ -105,9 +139,9 @@ object RecipeConverter {
         )
 
     /**
-     * Recipe Entity + CookingOrder List -> TempRecipeDetailResponseDto (임시 저장 레시피)
+     * Recipe + CookingOrder -> 임시 저장 레시피 DTO (null 허용)
      */
-    fun toTempDetailResponse(
+    fun toTempDto(
         recipe: Recipe,
         orders: List<CookingOrder>
     ): RecipeResponseDto.TempRecipeDetailResponseDto =
