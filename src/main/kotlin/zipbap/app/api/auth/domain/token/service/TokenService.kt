@@ -39,8 +39,7 @@ class TokenService(
         }
 
         val email: String = jwtTokenProvider.getUsernameFromToken(refreshToken)
-        val user: User = userRepository.findByEmail(email)
-                ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+        val user: User = userRepository.findByEmail(email).orElseThrow {throw GeneralException(ErrorStatus.USER_NOT_FOUND)}
 
         val stored = refreshTokenRepository.findByUser(user)
                 ?: return false
@@ -93,8 +92,9 @@ class TokenService(
         require(email.isNotBlank()) { "이메일은 비어있으면 안됩니다. "}
 
         val refreshToken: String = jwtTokenProvider.generateRefreshToken(email)
-        val user: User = userRepository.findByEmail(email)
-                ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+        val user: User = userRepository.findByEmail(email).orElseThrow {
+            throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+        }
 
 
         val hashedRefreshToken = refreshHmac.hmacBase64Url(refreshToken)
