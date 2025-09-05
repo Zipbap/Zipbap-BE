@@ -15,6 +15,9 @@ object RecipeResponseDto {
         @Schema(description = "레시피 제목", example = "소고기 미역국")
         val title: String,
 
+        @Schema(description = "대표 썸네일 URL", example = "https://cdn.zipbap.store/recipes/thumbnail.jpg")
+        val thumbnail: String,
+
         @Schema(description = "레시피 소제목", example = "할머니의 손맛")
         val subtitle: String,
 
@@ -79,6 +82,9 @@ object RecipeResponseDto {
 
         @Schema(description = "레시피 ID", example = "RC-1-00002")
         val id: String,
+
+        @Schema(description = "대표 썸네일 URL", example = "https://cdn.zipbap.store/recipes/temp_thumbnail.jpg")
+        val thumbnail: String? = null,
 
         @Schema(description = "레시피 제목", example = "임시 소고기 미역국")
         val title: String? = null,

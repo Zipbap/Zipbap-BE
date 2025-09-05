@@ -20,6 +20,9 @@ class Recipe(
         @JoinColumn(name = "user_id", nullable = false)
         val user: User,
 
+        @Column(length = 200, nullable = true)
+        var thumbnail: String? = null,
+
         @Column(nullable = true, length = 100)
         var title: String? = null,
 

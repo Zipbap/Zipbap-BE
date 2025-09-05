@@ -13,6 +13,9 @@ object RecipeRequestDto {
      */
     data class FinalizeRecipeRequestDto(
 
+        @Schema(description = "대표 썸네일 URL", example = "https://cdn.zipbap.store/recipes/thumbnail.jpg", required = true)
+        val thumbnail: String,
+
         @Schema(description = "레시피 제목", example = "소고기 미역국", required = true)
         val title: String,
 
@@ -79,6 +82,9 @@ object RecipeRequestDto {
      * 모든 필드 선택값(null 허용)
      */
     data class UpdateTempRecipeRequestDto(
+
+        @Schema(description = "대표 썸네일 URL", example = "https://cdn.zipbap.store/recipes/thumbnail.jpg", required = false)
+        val thumbnail: String,
 
         @Schema(description = "레시피 제목", example = "소고기 미역국", required = false)
         val title: String? = null,
