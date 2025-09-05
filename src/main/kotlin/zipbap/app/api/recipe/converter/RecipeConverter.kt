@@ -107,7 +107,7 @@ object RecipeConverter {
             }
 
     /**
-     * Recipe + CookingOrder -> 최종 등록 레시피 DTO (모든 필드 확정)
+     * Recipe + CookingOrder -> 최종 등록 레시피 DTO (단일 조회 포함, null-safe)
      */
     fun toDto(
         recipe: Recipe,
@@ -115,19 +115,19 @@ object RecipeConverter {
     ): RecipeResponseDto.RecipeDetailResponseDto =
         RecipeResponseDto.RecipeDetailResponseDto(
             id = recipe.id,
-            thumbnail = recipe.thumbnail!!,
-            title = recipe.title!!,
-            subtitle = recipe.subtitle!!,
-            introduction = recipe.introduction!!,
+            thumbnail = recipe.thumbnail,
+            title = recipe.title,
+            subtitle = recipe.subtitle,
+            introduction = recipe.introduction,
             myCategoryId = recipe.myCategory?.id,
-            cookingTypeId = recipe.cookingType!!.id!!,
-            situationId = recipe.situation!!.id!!,
-            mainIngredientId = recipe.mainIngredient!!.id!!,
-            methodId = recipe.method!!.id!!,
-            headcountId = recipe.headcount!!.id!!,
-            cookingTimeId = recipe.cookingTime!!.id!!,
-            levelId = recipe.level!!.id!!,
-            ingredientInfo = recipe.ingredientInfo!!,
+            cookingTypeId = recipe.cookingType?.id,
+            situationId = recipe.situation?.id,
+            mainIngredientId = recipe.mainIngredient?.id,
+            methodId = recipe.method?.id,
+            headcountId = recipe.headcount?.id,
+            cookingTimeId = recipe.cookingTime?.id,
+            levelId = recipe.level?.id,
+            ingredientInfo = recipe.ingredientInfo,
             kick = recipe.kick,
             isPrivate = recipe.isPrivate,
             video = recipe.video,
@@ -172,5 +172,18 @@ object RecipeConverter {
                     description = it.description
                 )
             }
+        )
+
+    /**
+     * 목록/카드 뷰용 경량 DTO
+     */
+    fun toListItemDto(recipe: Recipe): RecipeResponseDto.MyRecipeListItemResponseDto =
+        RecipeResponseDto.MyRecipeListItemResponseDto(
+            id = recipe.id,
+            thumbnail = recipe.thumbnail,
+            title = recipe.title,
+            subtitle = recipe.subtitle,
+            introduction = recipe.introduction,
+            myCategoryId = recipe.myCategory?.id
         )
 }

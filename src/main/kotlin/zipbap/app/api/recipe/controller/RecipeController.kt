@@ -42,4 +42,16 @@ class RecipeController(
         @UserInjection user: User
     ): ApiResponse<List<RecipeResponseDto.RecipeDetailResponseDto>> =
         ApiResponse.onSuccess(recipeService.getMyRecipes(user.id!!))
+
+    override fun getRecipeDetail(
+        recipeId: String,
+        @UserInjection user: User
+    ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto> =
+        ApiResponse.onSuccess(recipeService.getRecipeDetail(recipeId, user.id!!))
+
+    override fun getMyActiveRecipesFiltered(
+        @UserInjection user: User,
+        myCategoryIds: List<String>?
+    ): ApiResponse<List<RecipeResponseDto.MyRecipeListItemResponseDto>> =
+        ApiResponse.onSuccess(recipeService.getMyActiveRecipesFiltered(user.id!!, myCategoryIds))
 }

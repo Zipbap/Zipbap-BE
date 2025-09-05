@@ -85,4 +85,47 @@ interface RecipeDocs {
     fun getMyRecipes(
         @UserInjection user: User
     ): ApiResponse<List<RecipeResponseDto.RecipeDetailResponseDto>>
+
+
+    @Operation(
+        summary = "레시피 단일 조회",
+        description = "레시피 ID로 단일 상세 정보를 조회합니다. (본인 소유 & ACTIVE 상태만 접근 가능)"
+    )
+    @ApiResponses(
+        SwaggerApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = [Content(schema = Schema(implementation = RecipeResponseDto.RecipeDetailResponseDto::class))]
+        )
+    )
+    @GetMapping("/{recipeId}")
+    fun getRecipeDetail(
+        @PathVariable("recipeId") recipeId: String,
+        @UserInjection user: User
+    ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto>
+
+    @Operation(
+        summary = "내 레시피 목록 조회(다중 myCategory 필터)",
+        description = """
+        로그인 사용자의 ACTIVE 레시피를 배열 형태로 조회합니다.
+        쿼리 파라미터로 myCategoryId를 0개 이상 전달할 수 있습니다.
+        - 예: /api/recipes/me?myCategoryId=MC-1-00001&myCategoryId=MC-1-00002
+        - 아무 값도 전달하지 않으면 사용자의 모든 ACTIVE 레시피를 반환합니다.
+        반환 필드는 목록/카드 뷰에 필요한 최소 필드만 제공합니다.
+        """,
+    )
+    @ApiResponses(
+        SwaggerApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = [Content(schema = Schema(implementation = RecipeResponseDto.MyRecipeListItemResponseDto::class))]
+        )
+    )
+    @GetMapping("/me")
+    fun getMyActiveRecipesFiltered(
+        @UserInjection user: User,
+        @RequestParam(name = "myCategoryId", required = false) myCategoryIds: List<String>?
+    ): ApiResponse<List<RecipeResponseDto.MyRecipeListItemResponseDto>>
 }
+
+
