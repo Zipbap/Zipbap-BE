@@ -20,14 +20,17 @@ class BookmarkController(
 ) {
 
     @PostMapping("/{recipeId}")
-    fun markRecipe(@UserInjection user: User, @PathVariable recipeId: String): ApiResponse<BookmarkResponseDto> =
+    fun markRecipe(@UserInjection user: User, @PathVariable recipeId: String
+    ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
             ApiResponse.onSuccess(bookmarkService.markRecipe(user, recipeId))
 
     @DeleteMapping("/{recipeId}")
-    fun unmarkRecipe(@UserInjection user: User, @PathVariable recipeId: String): ApiResponse<BookmarkResponseDto> =
+    fun unmarkRecipe(@UserInjection user: User, @PathVariable recipeId: String
+    ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
             ApiResponse.onSuccess(bookmarkService.unmarkRecipe(user, recipeId))
 
     @GetMapping("/{recipeId}/count")
-    fun countBookmarks(@PathVariable recipeId: String): ApiResponse<BookmarkResponseDto> =
+    fun countBookmarks(@PathVariable recipeId: String
+    ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
             ApiResponse.onSuccess(bookmarkService.countBookmarks(recipeId))
 }
