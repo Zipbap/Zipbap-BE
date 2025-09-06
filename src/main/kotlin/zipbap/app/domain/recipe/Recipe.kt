@@ -76,6 +76,9 @@ class Recipe(
         @Column(name = "is_private", nullable = false)
         var isPrivate: Boolean = true,
 
+        @Column(name = "view_count", nullable = false)
+        var viewCount: Long = 0,
+
         @Enumerated(EnumType.STRING)
         @Column(name = "recipe_status", nullable = false)
         var recipeStatus: RecipeStatus = RecipeStatus.TEMPORARY,
