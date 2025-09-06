@@ -59,13 +59,19 @@ enum class ErrorStatus(
     LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "LIKE404", "해당 좋아요를 찾을 수 없습니다."),
     ALREADY_LIKED_RECIPE(HttpStatus.CONFLICT, "LIKE409", "이미 좋아요를 누른 레시피입니다."),
 
+    // 댓글 관련 에러
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404", "해당 댓글을 찾을 수 없습니다."),
+    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "COMMENT403", "해당 댓글에 대한 권한이 없습니다."),
+
+    // 북마크
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKMARK404", "해당 북마크를 찾을 수 없습니다."),
     ALREADY_BOOKMARK_RECIPE(HttpStatus.CONFLICT, "BOOKMARK409", "이미 북마크한 레시피입니다."),
 
+    // 팔로우
     ALREADY_FOLLOW_EXIST(HttpStatus.CONFLICT, "FOLLOW409", "이미 존재하는 팔로잉 관계입니다."),
     FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLLOW404", "해당 팔로잉 관계를 찾을 수 없습니다."),
 
-
+    // Auth
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION401", "인증에 실패했습니다."),
     OAUTH2_LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN401", "OAuth2 Login 과정에서 에러가 발생했습니다."),
     INVALID_REGISTRATION(HttpStatus.BAD_REQUEST, "REGISTRATION400", "잘못된 REGISTRATION입니다."),
