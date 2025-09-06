@@ -19,15 +19,15 @@ class BookmarkController(
         private val bookmarkService: BookmarkService
 ) {
 
-    @PostMapping
+    @PostMapping("/{recipeId}")
     fun markRecipe(@UserInjection user: User, @PathVariable recipeId: String): ApiResponse<BookmarkResponseDto> =
             ApiResponse.onSuccess(bookmarkService.markRecipe(user, recipeId))
 
-    @DeleteMapping
+    @DeleteMapping("/{recipeId}")
     fun unmarkRecipe(@UserInjection user: User, @PathVariable recipeId: String): ApiResponse<BookmarkResponseDto> =
             ApiResponse.onSuccess(bookmarkService.unmarkRecipe(user, recipeId))
 
-    @GetMapping("/count")
+    @GetMapping("/{recipeId}/count")
     fun countBookmarks(@PathVariable recipeId: String): ApiResponse<BookmarkResponseDto> =
             ApiResponse.onSuccess(bookmarkService.countBookmarks(recipeId))
 }
