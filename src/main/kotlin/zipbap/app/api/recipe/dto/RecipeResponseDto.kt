@@ -190,4 +190,11 @@ object RecipeResponseDto {
         val updatedAt: LocalDateTime? = null
 
     )
+
+    data class FeedResponseDto(
+            val recipeId: String,
+            val thumbnail: String?
+    )
+
+
 }

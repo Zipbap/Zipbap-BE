@@ -13,6 +13,7 @@ import zipbap.app.domain.file.FileStatus
 import zipbap.app.domain.recipe.Recipe
 import zipbap.app.domain.recipe.RecipeRepository
 import zipbap.app.domain.recipe.RecipeStatus
+import zipbap.app.domain.user.User
 import zipbap.app.domain.user.UserRepository
 import zipbap.app.global.util.CustomIdGenerator
 import zipbap.app.global.exception.GeneralException
@@ -251,5 +252,14 @@ class RecipeService(
         }
 
         return recipes.map { RecipeConverter.toListItemDto(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getFeedList(userId: Long): List<RecipeResponseDto.FeedResponseDto> {
+        val feedList = recipeRepository.findAllFeed(userId, RecipeStatus.ACTIVE, false)
+
+        return feedList.map {
+            RecipeConverter.toFeedDto(it)
+        }.toList()
     }
 }

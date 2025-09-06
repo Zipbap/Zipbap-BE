@@ -192,4 +192,11 @@ object RecipeConverter {
             createdAt = recipe.createdAt,
             updatedAt = recipe.updatedAt
         )
+
+    fun toFeedDto(recipe: Recipe): RecipeResponseDto.FeedResponseDto {
+        return RecipeResponseDto.FeedResponseDto(
+                recipeId = recipe.id,
+                thumbnail = recipe.thumbnail
+        )
+    }
 }
