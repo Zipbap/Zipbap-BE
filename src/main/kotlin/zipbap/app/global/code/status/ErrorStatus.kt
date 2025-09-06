@@ -62,6 +62,9 @@ enum class ErrorStatus(
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKMARK404", "해당 북마크를 찾을 수 없습니다."),
     ALREADY_BOOKMARK_RECIPE(HttpStatus.CONFLICT, "BOOKMARK409", "이미 북마크한 레시피입니다."),
 
+    ALREADY_FOLLOW_EXIST(HttpStatus.CONFLICT, "FOLLOW409", "이미 존재하는 팔로잉 관계입니다."),
+    FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLLOW404", "해당 팔로잉 관계를 찾을 수 없습니다."),
+
 
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION401", "인증에 실패했습니다."),
     OAUTH2_LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN401", "OAuth2 Login 과정에서 에러가 발생했습니다."),
