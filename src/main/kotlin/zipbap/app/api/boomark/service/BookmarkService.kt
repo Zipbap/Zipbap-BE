@@ -35,7 +35,7 @@ class BookmarkService(
         }
 
         if (bookmarkRepository.existsByUserAndRecipe(user, recipe)) {
-            throw GeneralException(ErrorStatus.ALREADY_LIKED_RECIPE)
+            throw GeneralException(ErrorStatus.ALREADY_BOOKMARK_RECIPE)
         }
 
         val sequence = bookmarkRepository.countByUserId(user.id!!) + 1
@@ -62,7 +62,7 @@ class BookmarkService(
         }
 
         if (!bookmarkRepository.existsByUserAndRecipe(user, recipe)) {
-            throw GeneralException(ErrorStatus.LIKE_NOT_FOUND)
+            throw GeneralException(ErrorStatus.BOOKMARK_NOT_FOUND)
         }
 
         bookmarkRepository.deleteByUserAndRecipe(user, recipe)
