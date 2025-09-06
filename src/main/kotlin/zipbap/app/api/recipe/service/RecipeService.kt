@@ -207,7 +207,7 @@ class RecipeService(
     /**
      * 레시피 단일 조회 (본인 소유 & ACTIVE만)
      */
-    @Transactional(readOnly = true)
+    @Transactional
     fun getRecipeDetail(
         recipeId: String,
         userId: Long
@@ -219,12 +219,15 @@ class RecipeService(
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         }
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
-            // 기획 상 ACTIVE만 상세 조회 허용
             throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
         }
 
+        // 조회수 증가
+        recipe.viewCount += 1
+        val savedRecipe = recipeRepository.save(recipe)
+
         val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
-        return RecipeConverter.toDto(recipe, orders)
+        return RecipeConverter.toDto(savedRecipe, orders)
     }
 
     /**

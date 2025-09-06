@@ -1,6 +1,7 @@
 package zipbap.app.api.recipe.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDateTime
 
 object RecipeResponseDto {
 
@@ -57,6 +58,13 @@ object RecipeResponseDto {
 
         @Schema(description = "비공개 여부", example = "true")
         val isPrivate: Boolean = true,
+
+        @Schema(description = "생성 시각", example = "2025-09-01T12:34:56")
+        val createdAt: LocalDateTime? = null,
+
+        @Schema(description = "수정 시각", example = "2025-09-05T15:20:00")
+        val updatedAt: LocalDateTime? = null,
+
 
         @Schema(description = "조리 순서 목록")
         val cookingOrders: List<CookingOrderResponse> = emptyList(),
@@ -129,6 +137,12 @@ object RecipeResponseDto {
         @Schema(description = "비공개 여부", example = "true")
         val isPrivate: Boolean? = null,
 
+        @Schema(description = "생성 시각", example = "2025-09-01T12:34:56")
+        val createdAt: LocalDateTime? = null,
+
+        @Schema(description = "수정 시각", example = "2025-09-05T15:20:00")
+        val updatedAt: LocalDateTime? = null,
+
         @Schema(description = "조리 순서 목록")
         val cookingOrders: List<CookingOrderResponse> = emptyList(),
 
@@ -167,6 +181,13 @@ object RecipeResponseDto {
         val introduction: String? = null,
 
         @Schema(description = "내 레시피 카테고리 ID", example = "MC-1-00001")
-        val myCategoryId: String? = null
+        val myCategoryId: String? = null,
+
+        @Schema(description = "생성 시각", example = "2025-09-01T12:34:56")
+        val createdAt: LocalDateTime? = null,
+
+        @Schema(description = "수정 시각", example = "2025-09-05T15:20:00")
+        val updatedAt: LocalDateTime? = null
+
     )
 }

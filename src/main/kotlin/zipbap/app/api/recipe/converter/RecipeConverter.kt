@@ -131,6 +131,8 @@ object RecipeConverter {
             kick = recipe.kick,
             isPrivate = recipe.isPrivate,
             video = recipe.video,
+            createdAt = recipe.createdAt,
+            updatedAt = recipe.updatedAt,
             cookingOrders = orders.sortedBy { it.turn }.map {
                 RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse(
                     turn = it.turn,
@@ -165,6 +167,8 @@ object RecipeConverter {
             kick = recipe.kick,
             isPrivate = recipe.isPrivate,
             video = recipe.video,
+            createdAt = recipe.createdAt,
+            updatedAt = recipe.updatedAt,
             cookingOrders = orders.sortedBy { it.turn }.map {
                 RecipeResponseDto.TempRecipeDetailResponseDto.CookingOrderResponse(
                     turn = it.turn,
@@ -184,6 +188,8 @@ object RecipeConverter {
             title = recipe.title,
             subtitle = recipe.subtitle,
             introduction = recipe.introduction,
-            myCategoryId = recipe.myCategory?.id
+            myCategoryId = recipe.myCategory?.id,
+            createdAt = recipe.createdAt,
+            updatedAt = recipe.updatedAt
         )
 }
