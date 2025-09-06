@@ -20,9 +20,7 @@ class MyPageService(
         private val userRepository: UserRepository,
         private val bookmarkService: BookmarkService,
         private val followService: FollowService,
-        private val recipeService: RecipeService,
-
-        private val queryRepository: MyPageQueryRepository
+        private val recipeService: RecipeService
 ) {
 
     fun getBookmarkVersion(viewer: User,
