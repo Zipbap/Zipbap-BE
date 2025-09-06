@@ -6,7 +6,6 @@ import zipbap.app.api.boomark.service.BookmarkService
 import zipbap.app.api.follow.service.FollowService
 import zipbap.app.api.mypage.converter.MyPageConverter
 import zipbap.app.api.mypage.dto.MyPageResponseDto
-import zipbap.app.api.mypage.repository.MyPageQueryRepository
 import zipbap.app.api.recipe.service.RecipeService
 import zipbap.app.api.user.converter.UserConverter
 import zipbap.app.domain.user.User
