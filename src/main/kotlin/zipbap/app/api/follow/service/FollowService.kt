@@ -54,6 +54,9 @@ class FollowService(
         return FollowConverter.toCountDto(unfollowingId, followingCount, followerCount, false)
     }
 
+    /**
+     * user가 userId의 팔로워인지 확인하고, userId의 팔로워 및 팔로잉 수를 조회합니다.
+     */
     fun count(user: User, userId: Long): FollowResponseDto.FollowCountDto {
         val foundUser = userRepository.findById(userId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)

@@ -2,11 +2,10 @@ package zipbap.app.api.boomark.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import zipbap.app.api.boomark.converter.BookmarkConverter
 import zipbap.app.api.boomark.dto.BookmarkResponseDto
-import zipbap.app.api.like.dto.LikeResponseDto
 import zipbap.app.domain.bookmark.Bookmark
 import zipbap.app.domain.bookmark.BookmarkRepository
-import zipbap.app.domain.like.RecipeLike
 import zipbap.app.domain.recipe.RecipeRepository
 import zipbap.app.domain.recipe.RecipeStatus
 import zipbap.app.domain.user.User
@@ -26,7 +25,8 @@ class BookmarkService(
      * Recipe가 ACTIVE 상태여야 하고, 이전에 북마크한 기록이 있으면 안된다.
      */
     @Transactional
-    fun markRecipe(user: User, recipeId: String): BookmarkResponseDto {
+    fun markRecipe(user: User, recipeId: String
+    ): BookmarkResponseDto.BookmarkSimpleResponseDto {
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
 
@@ -45,7 +45,7 @@ class BookmarkService(
         bookmarkRepository.save(Bookmark(user, recipe, generatedId))
         val count = bookmarkRepository.countByRecipe(recipe)
 
-        return BookmarkResponseDto(recipe.id, count)
+        return BookmarkConverter.toSimpleDto(recipe.id, count)
     }
 
     /**
@@ -53,7 +53,8 @@ class BookmarkService(
      * Recipe가 ACTIVE 상태여야 하고, 북마크가 활성화된 상태여야 한다.
      */
     @Transactional
-    fun unmarkRecipe(user: User, recipeId: String): BookmarkResponseDto {
+    fun unmarkRecipe(user: User, recipeId: String
+    ): BookmarkResponseDto.BookmarkSimpleResponseDto {
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
 
@@ -68,13 +69,13 @@ class BookmarkService(
         bookmarkRepository.deleteByUserAndRecipe(user, recipe)
         val count = bookmarkRepository.countByRecipe(recipe)
 
-        return BookmarkResponseDto(recipe.id, count)
+        return BookmarkConverter.toSimpleDto(recipe.id, count)
     }
 
     /**
      * 레시피의 북마크 수를 반환한다.
      */
-    fun countBookmarks(recipeId: String): BookmarkResponseDto {
+    fun countBookmarks(recipeId: String): BookmarkResponseDto.BookmarkSimpleResponseDto {
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
 
@@ -83,6 +84,17 @@ class BookmarkService(
         }
 
         val count = bookmarkRepository.countByRecipe(recipe)
-        return BookmarkResponseDto(recipe.id, count)
+
+        return BookmarkConverter.toSimpleDto(recipe.id, count)
+    }
+
+    fun getMarkedRecipe(user: User): List<BookmarkResponseDto.BookmarkRecipeResponseDto> {
+        val recipes = bookmarkRepository.findByUser(user, RecipeStatus.ACTIVE)
+                .map {
+                    BookmarkConverter.toThumbnailDto(it.recipe)
+                } .toList()
+
+        return recipes
+
     }
 }

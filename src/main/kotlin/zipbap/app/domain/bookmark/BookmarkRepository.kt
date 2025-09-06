@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.transaction.annotation.Transactional
 import zipbap.app.domain.recipe.Recipe
+import zipbap.app.domain.recipe.RecipeStatus
 import zipbap.app.domain.user.User
 
 interface BookmarkRepository : JpaRepository<Bookmark, Long> {
@@ -15,6 +16,10 @@ interface BookmarkRepository : JpaRepository<Bookmark, Long> {
     fun existsByUserAndRecipe(user: User, recipe: Recipe): Boolean
     fun countByRecipe(recipe: Recipe): Long
     fun countByUserId(userId: Long): Long
+
+    @Query("SELECT b FROM Bookmark b JOIN FETCH b.recipe " +
+            "WHERE b.user = :user AND b.recipe.recipeStatus = :recipeStatus ")
+    fun findByUser(user: User, recipeStatus: RecipeStatus): List<Bookmark>
 
 
 }

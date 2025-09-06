@@ -2,10 +2,20 @@ package zipbap.app.api.boomark.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 
-data class BookmarkResponseDto(
-        @Schema(description = "레시피 ID", example = "RC-1-00001")
-        val recipeId: String,
+class BookmarkResponseDto() {
+        data class BookmarkSimpleResponseDto(
+                @Schema(description = "레시피 ID", example = "RC-1-00001")
+                val recipeId: String,
 
-        @Schema(description = "좋아요 수", example = "10")
-        val likeCount: Long
-)
+                @Schema(description = "북마크 수", example = "10")
+                val bookmarkCount: Long
+        )
+
+        data class BookmarkRecipeResponseDto(
+                @Schema(description = "레시피 ID", example = "RC-1-00001")
+                val recipeId: String,
+
+                @Schema(description = "썸네일 이미지", example = "https://naver.com")
+                val thumbnailImage: String?
+        )
+}

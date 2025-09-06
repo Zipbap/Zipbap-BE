@@ -31,4 +31,12 @@ class User(
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         val id: Long? = null
 ) : BaseEntity() {
+
+        fun update(nickname:String, isPrivate: Boolean,
+                   profileImage: String?, statusMessage: String?) {
+                this.nickname = nickname
+                this.isPrivate = isPrivate
+                this.profileImage = profileImage
+                this.statusMessage = statusMessage
+        }
 }
