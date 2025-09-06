@@ -23,10 +23,11 @@ class FeedController(
     override fun getFeed(
         user: User?,
         filter: FeedRequestDto.FeedFilterType?,
-        pageable: Pageable
+        pageable: Pageable,
+        condition: String?
     ): ApiResponse<Page<FeedResponseDto.FeedItemResponseDto>> =
         ApiResponse.onSuccess(
-            feedService.getFeedList(user, filter ?: FeedRequestDto.FeedFilterType.ALL, pageable)
+            feedService.getFeedList(user, filter ?: FeedRequestDto.FeedFilterType.ALL, pageable, condition)
         )
 
     override fun getFeedDetail(

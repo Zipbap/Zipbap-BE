@@ -51,11 +51,17 @@ interface FeedDocs {
   - 형식: `property,(asc|desc)`  
   - 예: `sort=createdAt,desc` → 최신순  
   - 예: `sort=likeCount,desc` → 좋아요 많은 순  
-  - 여러 조건 가능 → `sort=likeCount,desc&sort=createdAt,desc`  
+  - 여러 조건 가능 → `sort=likeCount,desc&sort=createdAt,desc` 
+- **condition (string, query)**
+    - 검색 조건
+    - 제목, 소제목, 재료에서 해당 condition이 들어간 대상 검색
+    - 제목, 소제목, 재료 순으로 정렬 순위를 가짐
+    - null 일 경우 조건없이 검색
+    - 예: `condition=소고기` -> 1. 제목에서 소고기가 들어간 피드 2. 소제목에서 소고기가 들어간 피드 3. 재료에서 소고기가 들어간 피드
 
 📌 호출 예시  
 - `/api/feed?filter=ALL&page=0&size=10&sort=createdAt,desc`  
-- `/api/feed?filter=HOT&page=1&size=20&sort=likeCount,desc`
+- `/api/feed?filter=HOT&page=1&size=20&sort=likeCount,desc&condition=소고기`
 """
     )
     @ApiResponses(
@@ -83,7 +89,8 @@ interface FeedDocs {
         @Parameter(description = "로그인 사용자 (없으면 null)") @UserInjection user: User?,
         @Parameter(description = "필터 조건 (ALL/TODAY/HOT/RECOMMEND/FOLLOWING)")
         @RequestParam(name = "filter", required = false) filter: FeedRequestDto.FeedFilterType?,
-        @ParameterObject pageable: Pageable
+        @ParameterObject pageable: Pageable,
+        @RequestParam(name = "conditon", required = false) condition: String?
     ): ApiResponse<Page<FeedResponseDto.FeedItemResponseDto>>
 
     @Operation(

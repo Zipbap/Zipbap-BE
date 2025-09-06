@@ -27,13 +27,14 @@ class FeedService(
     fun getFeedList(
         loginUser: User?,
         filter: FeedRequestDto.FeedFilterType,
-        pageable: Pageable
+        pageable: Pageable,
+        condition: String?
     ): Page<FeedResponseDto.FeedItemResponseDto> {
         if (filter == FeedRequestDto.FeedFilterType.FOLLOWING && loginUser == null) {
             throw GeneralException(ErrorStatus.UNAUTHORIZED)
         }
 
-        val page = feedQueryRepository.findFeed(loginUser, filter, pageable)
+        val page = feedQueryRepository.findFeed(loginUser, filter, pageable, condition)
 
         val content = page.content.map { row ->
             // TODO: 실제 로그인 사용자의 좋아요/북마크 여부 조회 로직 필요
