@@ -33,4 +33,9 @@ class BookmarkController(
     fun countBookmarks(@PathVariable recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
             ApiResponse.onSuccess(bookmarkService.countBookmarks(recipeId))
+
+    @GetMapping("/users")
+    fun userRecipes(@UserInjection user: User
+    ): ApiResponse<List<BookmarkResponseDto.BookmarkRecipeResponseDto>> =
+            ApiResponse.onSuccess(bookmarkService.getMarkedRecipe(user))
 }
