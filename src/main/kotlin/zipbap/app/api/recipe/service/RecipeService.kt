@@ -156,7 +156,7 @@ class RecipeService(
     fun getMyTempRecipes(userId: Long): List<RecipeResponseDto.TempRecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.TEMPORARY)
         return recipes.map { recipe ->
-            val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+            val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
             RecipeConverter.toTempDto(recipe, orders)
         }
     }
@@ -168,7 +168,7 @@ class RecipeService(
     fun getMyRecipes(userId: Long): List<RecipeResponseDto.RecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
         return recipes.map { recipe ->
-            val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+            val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
             RecipeConverter.toDto(recipe, orders)
         }
     }
@@ -226,7 +226,7 @@ class RecipeService(
         recipe.viewCount += 1
         val savedRecipe = recipeRepository.save(recipe)
 
-        val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+        val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
         return RecipeConverter.toDto(savedRecipe, orders)
     }
 
@@ -251,5 +251,14 @@ class RecipeService(
         }
 
         return recipes.map { RecipeConverter.toListItemDto(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getFeedList(userId: Long): List<RecipeResponseDto.FeedResponseDto> {
+        val feedList = recipeRepository.findAllFeed(userId, RecipeStatus.ACTIVE, false)
+
+        return feedList.map {
+            RecipeConverter.toFeedDto(it)
+        }.toList()
     }
 }

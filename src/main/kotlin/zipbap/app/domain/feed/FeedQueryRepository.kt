@@ -14,7 +14,8 @@ interface FeedQueryRepository {
     fun findFeed(
         loginUser: User?,
         filter: FeedRequestDto.FeedFilterType,
-        pageable: Pageable
+        pageable: Pageable,
+        keyword: String?
     ): Page<FeedQueryResult.FeedListRow>
 
     fun findFeedDetail(

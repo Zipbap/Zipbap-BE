@@ -1,8 +1,11 @@
 package zipbap.app.domain.feed
 
+import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.Expressions
+import com.querydsl.core.types.dsl.NumberExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -45,7 +48,8 @@ class FeedQueryRepositoryImpl(
     override fun findFeed(
         loginUser: zipbap.app.domain.user.User?,
         filter: FeedRequestDto.FeedFilterType,
-        pageable: Pageable
+        pageable: Pageable,
+        keyword: String?
     ): Page<FeedListRow> {
         val baseVisibility = activeRecipe()
             .and(recipe.isPrivate.isFalse)
@@ -59,12 +63,21 @@ class FeedQueryRepositoryImpl(
             FeedRequestDto.FeedFilterType.FOLLOWING -> followingOnly(loginUser)
         }
 
-        val where = if (filterCondition != null) baseVisibility.and(filterCondition) else baseVisibility
+        val keywordCond = searchCondition(keyword)
 
-        val orderSpecifiers = when (filter) {
-            FeedRequestDto.FeedFilterType.HOT -> arrayOf(like.id.countDistinct().desc(), recipe.createdAt.desc())
-            FeedRequestDto.FeedFilterType.RECOMMEND -> arrayOf(bookmark.id.countDistinct().desc(), recipe.createdAt.desc())
-            else -> arrayOf(recipe.createdAt.desc())
+        var where = if (filterCondition != null) baseVisibility.and(filterCondition) else baseVisibility
+        if (keywordCond != null) where = where.and(keywordCond)
+
+        val priority = priorityExpr(keyword)
+
+        val orderSpecifiers = mutableListOf<OrderSpecifier<*>>()
+        if (priority != null) {
+            orderSpecifiers += priority.desc()
+        }
+        when (filter) {
+            FeedRequestDto.FeedFilterType.HOT -> orderSpecifiers += arrayOf(like.id.countDistinct().desc(), recipe.createdAt.desc())
+            FeedRequestDto.FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.bookmarkId.countDistinct().desc(), recipe.createdAt.desc())
+            else -> orderSpecifiers += arrayOf(recipe.createdAt.desc())
         }
 
         val query = queryFactory
@@ -74,7 +87,7 @@ class FeedQueryRepositoryImpl(
                     author.nickname.`as`("nickname"),
                     author.profileImage.`as`("profileImage"),
                     author.isPrivate.`as`("userIsPrivate"),
-                    recipe.id.`as`("recipeId"),
+                    recipe.recipeId.`as`("recipeId"),
                     recipe.title.`as`("title"),
                     recipe.thumbnail.`as`("thumbnail"),
                     recipe.introduction.`as`("introduction"),
@@ -83,7 +96,7 @@ class FeedQueryRepositoryImpl(
                     recipe.createdAt.`as`("createdAt"),
                     recipe.updatedAt.`as`("updatedAt"),
                     like.id.countDistinct().`as`("likeCount"),
-                    bookmark.id.countDistinct().`as`("bookmarkCount"),
+                    bookmark.bookmarkId.countDistinct().`as`("bookmarkCount"),
                     comment.id.countDistinct().`as`("commentCount")
                 )
             )
@@ -93,8 +106,8 @@ class FeedQueryRepositoryImpl(
             .leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
             .leftJoin(comment).on(comment.recipe.eq(recipe))
             .where(where)
-            .groupBy(recipe.id, author.id)
-            .orderBy(*orderSpecifiers)
+            .groupBy(recipe.recipeId, author.id)
+            .orderBy(*orderSpecifiers.toTypedArray())
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
 
@@ -128,7 +141,7 @@ class FeedQueryRepositoryImpl(
                     author.profileImage.`as`("profileImage"),
                     author.statusMessage.`as`("statusMessage"),
                     isFollowingExpr.`as`("isFollowing"),
-                    recipe.id.`as`("recipeId"),
+                    recipe.recipeId.`as`("recipeId"),
                     recipe.title.`as`("title"),
                     recipe.subtitle.`as`("subtitle"),
                     recipe.introduction.`as`("introduction"),
@@ -148,7 +161,7 @@ class FeedQueryRepositoryImpl(
                     recipe.createdAt.`as`("createdAt"),
                     recipe.updatedAt.`as`("updatedAt"),
                     like.id.countDistinct().`as`("likeCount"),
-                    bookmark.id.countDistinct().`as`("bookmarkCount"),
+                    bookmark.bookmarkId.countDistinct().`as`("bookmarkCount"),
                     comment.id.countDistinct().`as`("commentCount")
                 )
             )
@@ -158,11 +171,11 @@ class FeedQueryRepositoryImpl(
             .leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
             .leftJoin(comment).on(comment.recipe.eq(recipe))
             .where(
-                recipe.id.eq(recipeId)
+                recipe.recipeId.eq(recipeId)
                     .and(activeRecipe())
                     .and(recipe.isPrivate.isFalse.or(loginUserOwns(loginUser)).or(authorVisibility(loginUser)))
             )
-            .groupBy(recipe.id, author.id)
+            .groupBy(recipe.recipeId, author.id)
             .fetchOne()
     }
 
@@ -195,5 +208,27 @@ class FeedQueryRepositoryImpl(
         return queryFactory.selectOne().from(follow)
             .where(follow.follower.eq(loginUser).and(follow.following.eq(author)))
             .exists()
+    }
+
+    private fun searchCondition(keyword: String?): BooleanExpression? {
+        if (keyword.isNullOrBlank()) return null
+        val q = keyword.trim()
+
+        val titleMatch = recipe.title.containsIgnoreCase(q)
+        val subtitleMatch = recipe.subtitle.containsIgnoreCase(q)
+        val ingredientMatch = recipe.ingredientInfo.containsIgnoreCase(q)
+
+        return titleMatch.or(subtitleMatch).or(ingredientMatch)
+    }
+
+    private fun priorityExpr(keyword: String?): NumberExpression<Int>? {
+        if (keyword.isNullOrBlank()) return null
+        val q = keyword.trim()
+
+        return CaseBuilder()
+                .`when`(recipe.title.containsIgnoreCase(q)).then(3)
+                .`when`(recipe.subtitle.containsIgnoreCase(q)).then(2)
+                .`when`(recipe.ingredientInfo.containsIgnoreCase(q)).then(1)
+                .otherwise(0)
     }
 }

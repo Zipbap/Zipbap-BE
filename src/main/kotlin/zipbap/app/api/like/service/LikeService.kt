@@ -41,7 +41,7 @@ class LikeService(
         recipeLikeRepository.save(RecipeLike(user, recipe))
         val count = recipeLikeRepository.countByRecipe(recipe)
 
-        return LikeResponseDto(recipe.id, count)
+        return LikeResponseDto(recipe.recipeId, count)
     }
 
     /**
@@ -67,7 +67,7 @@ class LikeService(
         recipeLikeRepository.deleteByUserAndRecipe(user, recipe)
         val count = recipeLikeRepository.countByRecipe(recipe)
 
-        return LikeResponseDto(recipe.id, count)
+        return LikeResponseDto(recipe.recipeId, count)
     }
 
     /**
@@ -86,6 +86,6 @@ class LikeService(
         }
 
         val count = recipeLikeRepository.countByRecipe(recipe)
-        return LikeResponseDto(recipe.id, count)
+        return LikeResponseDto(recipe.recipeId, count)
     }
 }
