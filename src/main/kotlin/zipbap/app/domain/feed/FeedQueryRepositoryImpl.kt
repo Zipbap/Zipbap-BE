@@ -76,7 +76,7 @@ class FeedQueryRepositoryImpl(
         }
         when (filter) {
             FeedRequestDto.FeedFilterType.HOT -> orderSpecifiers += arrayOf(like.id.countDistinct().desc(), recipe.createdAt.desc())
-            FeedRequestDto.FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.id.countDistinct().desc(), recipe.createdAt.desc())
+            FeedRequestDto.FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.bookmarkId.countDistinct().desc(), recipe.createdAt.desc())
             else -> orderSpecifiers += arrayOf(recipe.createdAt.desc())
         }
 
@@ -87,7 +87,7 @@ class FeedQueryRepositoryImpl(
                     author.nickname.`as`("nickname"),
                     author.profileImage.`as`("profileImage"),
                     author.isPrivate.`as`("userIsPrivate"),
-                    recipe.id.`as`("recipeId"),
+                    recipe.recipeId.`as`("recipeId"),
                     recipe.title.`as`("title"),
                     recipe.thumbnail.`as`("thumbnail"),
                     recipe.introduction.`as`("introduction"),
@@ -96,7 +96,7 @@ class FeedQueryRepositoryImpl(
                     recipe.createdAt.`as`("createdAt"),
                     recipe.updatedAt.`as`("updatedAt"),
                     like.id.countDistinct().`as`("likeCount"),
-                    bookmark.id.countDistinct().`as`("bookmarkCount"),
+                    bookmark.bookmarkId.countDistinct().`as`("bookmarkCount"),
                     comment.id.countDistinct().`as`("commentCount")
                 )
             )
@@ -106,7 +106,7 @@ class FeedQueryRepositoryImpl(
             .leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
             .leftJoin(comment).on(comment.recipe.eq(recipe))
             .where(where)
-            .groupBy(recipe.id, author.id)
+            .groupBy(recipe.recipeId, author.id)
             .orderBy(*orderSpecifiers.toTypedArray())
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
@@ -141,7 +141,7 @@ class FeedQueryRepositoryImpl(
                     author.profileImage.`as`("profileImage"),
                     author.statusMessage.`as`("statusMessage"),
                     isFollowingExpr.`as`("isFollowing"),
-                    recipe.id.`as`("recipeId"),
+                    recipe.recipeId.`as`("recipeId"),
                     recipe.title.`as`("title"),
                     recipe.subtitle.`as`("subtitle"),
                     recipe.introduction.`as`("introduction"),
@@ -161,7 +161,7 @@ class FeedQueryRepositoryImpl(
                     recipe.createdAt.`as`("createdAt"),
                     recipe.updatedAt.`as`("updatedAt"),
                     like.id.countDistinct().`as`("likeCount"),
-                    bookmark.id.countDistinct().`as`("bookmarkCount"),
+                    bookmark.bookmarkId.countDistinct().`as`("bookmarkCount"),
                     comment.id.countDistinct().`as`("commentCount")
                 )
             )
@@ -171,11 +171,11 @@ class FeedQueryRepositoryImpl(
             .leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
             .leftJoin(comment).on(comment.recipe.eq(recipe))
             .where(
-                recipe.id.eq(recipeId)
+                recipe.recipeId.eq(recipeId)
                     .and(activeRecipe())
                     .and(recipe.isPrivate.isFalse.or(loginUserOwns(loginUser)).or(authorVisibility(loginUser)))
             )
-            .groupBy(recipe.id, author.id)
+            .groupBy(recipe.recipeId, author.id)
             .fetchOne()
     }
 

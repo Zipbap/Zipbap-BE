@@ -13,7 +13,6 @@ import zipbap.app.domain.file.FileStatus
 import zipbap.app.domain.recipe.Recipe
 import zipbap.app.domain.recipe.RecipeRepository
 import zipbap.app.domain.recipe.RecipeStatus
-import zipbap.app.domain.user.User
 import zipbap.app.domain.user.UserRepository
 import zipbap.app.global.util.CustomIdGenerator
 import zipbap.app.global.exception.GeneralException
@@ -157,7 +156,7 @@ class RecipeService(
     fun getMyTempRecipes(userId: Long): List<RecipeResponseDto.TempRecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.TEMPORARY)
         return recipes.map { recipe ->
-            val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+            val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
             RecipeConverter.toTempDto(recipe, orders)
         }
     }
@@ -169,7 +168,7 @@ class RecipeService(
     fun getMyRecipes(userId: Long): List<RecipeResponseDto.RecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
         return recipes.map { recipe ->
-            val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+            val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
             RecipeConverter.toDto(recipe, orders)
         }
     }
@@ -227,7 +226,7 @@ class RecipeService(
         recipe.viewCount += 1
         val savedRecipe = recipeRepository.save(recipe)
 
-        val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
+        val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
         return RecipeConverter.toDto(savedRecipe, orders)
     }
 
