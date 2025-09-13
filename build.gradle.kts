@@ -60,6 +60,9 @@ dependencies {
 	kapt("jakarta.annotation:jakarta.annotation-api")
 	kapt("jakarta.persistence:jakarta.persistence-api")
 
+	// Logstash
+	implementation("net.logstash.logback:logstash-logback-encoder:8.1")
+
 	// 테스트 (Spring Boot Test + JUnit5)
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
