@@ -1,5 +1,7 @@
 package zipbap.app.api.mypage.controller
 
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -30,17 +32,21 @@ class MyPageController(
     @GetMapping("/{userId}/feed")
     fun getFeedVersion(
             @UserInjection user: User,
-            @PathVariable userId: Long): ApiResponse<MyPageResponseDto.FeedDto> {
-        return ApiResponse.onSuccess(myPageService.getFeedVersion(user, userId))
+            @PathVariable userId: Long,
+            @PageableDefault(size = 21, page = 0) pageable: Pageable
+            ): ApiResponse<MyPageResponseDto> {
+        return ApiResponse.onSuccess(myPageService.getFeedCard(user, userId, pageable))
     }
 
     /**
      * 마이페이지 중 북마크를 검색합니다!
      */
     @GetMapping("/{userId}/bookmark")
-    fun getBookmarkVersion(@UserInjection user: User,
-                           @PathVariable userId: Long
-    ): ApiResponse<MyPageResponseDto.BookmarkDto> {
-        return ApiResponse.onSuccess(myPageService.getBookmarkVersion(user, userId))
+    fun getBookmarkVersion(
+            @UserInjection user: User,
+            @PathVariable userId: Long,
+            @PageableDefault(size = 21, page = 0) pageable: Pageable
+    ): ApiResponse<MyPageResponseDto> {
+        return ApiResponse.onSuccess(myPageService.getBookmarkCard(user, userId, pageable))
     }
 }

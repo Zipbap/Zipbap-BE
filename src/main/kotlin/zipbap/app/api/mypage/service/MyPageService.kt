@@ -1,13 +1,11 @@
 package zipbap.app.api.mypage.service
 
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import zipbap.app.api.boomark.service.BookmarkService
-import zipbap.app.api.follow.service.FollowService
 import zipbap.app.api.mypage.converter.MyPageConverter
 import zipbap.app.api.mypage.dto.MyPageResponseDto
-import zipbap.app.api.recipe.service.RecipeService
-import zipbap.app.api.user.converter.UserConverter
+import zipbap.app.domain.mypage.MyPageQueryRepository
 import zipbap.app.domain.user.User
 import zipbap.app.domain.user.UserRepository
 import zipbap.app.global.code.status.ErrorStatus
@@ -17,40 +15,37 @@ import zipbap.app.global.exception.GeneralException
 @Transactional(readOnly = true)
 class MyPageService(
         private val userRepository: UserRepository,
-        private val bookmarkService: BookmarkService,
-        private val followService: FollowService,
-        private val recipeService: RecipeService
+        private val myPageQueryRepository: MyPageQueryRepository
 ) {
 
-    fun getBookmarkVersion(viewer: User,
-                           ownerId: Long) : MyPageResponseDto.BookmarkDto {
+    fun getBookmarkCard(
+            viewer: User,
+            ownerId: Long,
+            pageable: Pageable) : MyPageResponseDto {
         if (ownerId != viewer.id) {
-            throw GeneralException(ErrorStatus.UNAUTHORIZED)
+            throw GeneralException(ErrorStatus.UNAUTHORIZED) // 저장된 Bookmark는 자기 자신만 볼 수 있다.
         }
-        val bookmarkRecipeResponseDtos = bookmarkService.getMarkedRecipe(viewer)
-        val followCountDto = followService.count(viewer, ownerId)
-        val profileDto = UserConverter.toProfileDto(viewer)
 
-       return MyPageConverter.toBookmarkDto(bookmarkRecipeResponseDtos,
-                followCountDto,
-                profileDto)
+        val feedCards = myPageQueryRepository.loadBookmarkCards(ownerId, pageable)
+        val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewer.id)
+
+        return MyPageConverter.toDto(profileBlock, feedCards, true, false)
     }
 
-    fun getFeedVersion(viewer: User, ownerId: Long): MyPageResponseDto.FeedDto {
-        val owner = userRepository.findById(ownerId).orElseThrow {
+    fun getFeedCard(
+            viewer: User,
+            ownerId: Long,
+            pageable: Pageable): MyPageResponseDto {
+        userRepository.findById(ownerId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
-        val feedList = recipeService.getFeedList(ownerId)
-        val followCountDto = followService.count(viewer, ownerId)
-        val profileDto = UserConverter.toProfileDto(viewer)
-        val isOwner = viewer.id == ownerId
+        val feedCards = myPageQueryRepository.loadFeedCards(ownerId, pageable)
+        val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewer.id!!)
 
-        return MyPageConverter.toFeedDto(feedList,
-                followCountDto,
-                profileDto,
-                isOwner
-        )
+        val isOwner = (viewer.id == ownerId)
+
+        return MyPageConverter.toDto(profileBlock, feedCards, isOwner, true)
     }
 
 }

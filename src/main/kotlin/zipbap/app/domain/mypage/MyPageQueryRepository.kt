@@ -1,10 +1,14 @@
-package zipbap.app.api.mypage.repository
+package zipbap.app.domain.mypage
 
+import com.querydsl.core.BooleanBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
 
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.JPAExpressions
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import zipbap.app.api.mypage.dto.ProfileBlock
 import zipbap.app.api.mypage.dto.RecipeCardDto
 import zipbap.app.domain.follow.QFollow
@@ -58,11 +62,18 @@ class MyPageQueryRepository(
                 ?: throw IllegalStateException("User($ownerId) not found")
     }
 
-    fun loadBookmarkCards(ownerId: Long, limit: Int): List<RecipeCardDto> {
+    fun loadBookmarkCards(ownerId: Long, pageable: Pageable): Page<RecipeCardDto> {
         val b = QBookmark.bookmark
         val r = QRecipe.recipe
 
-        return query
+        val where = BooleanBuilder().apply {
+            and(b.user.id.eq(ownerId))
+            and(b.deletedAt.isNull)
+            and(r.isPrivate.isFalse) // 게시자가 피드에서 비공개로 전환시 조회불가
+            and(r.deletedAt.isNull)
+        }
+
+        val content = query
                 .select(
                         Projections.constructor(
                                 RecipeCardDto::class.java,
@@ -71,16 +82,33 @@ class MyPageQueryRepository(
                 )
                 .from(b)
                 .join(b.recipe, r)
-                .where(b.user.id.eq(ownerId))
+                .where(where)
                 .orderBy(b.createdAt.desc())
-                .limit(limit.toLong())
+                .offset(pageable.offset)
+                .limit(pageable.pageSize.toLong())
                 .fetch()
+
+        val total = query
+                .select(b.bookmarkId.count())
+                .from(b)
+                .join(b.recipe, r)
+                .where(where)
+                .fetchOne() ?: 0L
+
+        return PageImpl(content, pageable, total)
     }
 
-    fun loadFeedCards(ownerId: Long, offset: Int, limit: Int): List<RecipeCardDto> {
+    fun loadFeedCards(ownerId: Long, pageable: Pageable): Page<RecipeCardDto> {
         val r = QRecipe.recipe
 
-        return query
+        val where = BooleanBuilder().apply {
+            and(r.user.id.eq(ownerId))
+            and(r.recipeStatus.eq(RecipeStatus.ACTIVE))
+            and(r.isPrivate.isFalse)
+            and(r.deletedAt.isNull)
+        }
+
+        val content = query
                 .select(
                         Projections.constructor(
                                 RecipeCardDto::class.java,
@@ -88,15 +116,19 @@ class MyPageQueryRepository(
                         )
                 )
                 .from(r)
-                .where(
-                        r.user.id.eq(ownerId),
-                        r.recipeStatus.eq(RecipeStatus.ACTIVE),
-                        r.isPrivate.isFalse
-                )
+                .where(where)
                 .orderBy(r.createdAt.desc())
-                .offset(offset.toLong())
-                .limit(limit.toLong())
+                .offset(pageable.offset)
+                .limit(pageable.pageSize.toLong())
                 .fetch()
+
+        val total = query
+                .select(r.count())
+                .from(r)
+                .where(where)
+                .fetchOne() ?: 0L
+
+        return PageImpl(content, pageable, total)
     }
 
     // (선택) 팔로워/팔로잉을 "한 스캔"으로 구하는 버전 (MySQL용 CASE 방식)
