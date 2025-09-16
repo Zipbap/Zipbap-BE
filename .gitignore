@@ -36,4 +36,6 @@ src/main/resources/application-*.yml
 */application-*.yml
 */application-*.yaml
 
+api-admin/src/main/resources/application.yaml
+api-user/src/main/resources/application.yaml
 

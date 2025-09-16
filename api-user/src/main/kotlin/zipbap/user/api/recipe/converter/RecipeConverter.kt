@@ -1,0 +1,202 @@
+package zipbap.user.api.recipe.converter
+
+import zipbap.user.api.recipe.dto.RecipeRequestDto
+import zipbap.user.api.recipe.dto.RecipeResponseDto
+import zipbap.global.domain.cookingorder.CookingOrder
+import zipbap.global.domain.recipe.Recipe
+import zipbap.global.domain.recipe.RecipeStatus
+import zipbap.global.domain.user.User
+import zipbap.global.domain.category.cookingtime.CookingTime
+import zipbap.global.domain.category.cookingtype.CookingType
+import zipbap.global.domain.category.headcount.Headcount
+import zipbap.global.domain.category.level.Level
+import zipbap.global.domain.category.mainingredient.MainIngredient
+import zipbap.global.domain.category.method.Method
+import zipbap.global.domain.category.mycategory.MyCategory
+import zipbap.global.domain.category.situation.Situation
+
+object RecipeConverter {
+
+    /**
+     * TempRecipe Entity 생성
+     */
+    fun toEntity(
+        id: String,
+        user: User
+    ): Recipe =
+        Recipe(
+            recipeId = id,
+            user = user,
+            isPrivate = true,
+            recipeStatus = RecipeStatus.TEMPORARY
+        )
+
+    /**
+     * finalizeRecipeRequestDto -> Recipe Entity
+     */
+    fun toEntity(
+            id: String,
+            user: User,
+            dto: RecipeRequestDto.FinalizeRecipeRequestDto,
+            myCategory: MyCategory?,
+            cookingType: CookingType,
+            situation: Situation,
+            mainIngredient: MainIngredient,
+            method: Method,
+            headcount: Headcount,
+            cookingTime: CookingTime,
+            level: Level
+    ): Recipe =
+        Recipe(
+            recipeId = id,
+            user = user,
+            thumbnail = dto.thumbnail,
+            title = dto.title,
+            subtitle = dto.subtitle,
+            introduction = dto.introduction,
+            myCategory = myCategory,
+            cookingType = cookingType,
+            situation = situation,
+            mainIngredient = mainIngredient,
+            method = method,
+            headcount = headcount,
+            cookingTime = cookingTime,
+            level = level,
+            ingredientInfo = dto.ingredientInfo,
+            video = dto.video,
+            kick = dto.kick,
+            isPrivate = dto.isPrivate,
+            recipeStatus = RecipeStatus.ACTIVE
+        )
+
+    /**
+     * CookingOrderRequest (Finalize) -> CookingOrder Entity
+     */
+    fun toEntityFromRegister(
+            recipe: Recipe,
+            orders: List<RecipeRequestDto.FinalizeRecipeRequestDto.CookingOrderRequest>
+    ): List<CookingOrder> =
+        orders.sortedBy { it.turn }
+            .map {
+                CookingOrder(
+                    recipe = recipe,
+                    image = it.image,
+                    description = it.description,
+                    turn = it.turn
+                )
+            }
+
+    /**
+     * CookingOrderRequest (Update Temp) -> CookingOrder Entity
+     */
+    fun toEntityFromUpdate(
+            recipe: Recipe,
+            orders: List<RecipeRequestDto.UpdateTempRecipeRequestDto.CookingOrderRequest>
+    ): List<CookingOrder> =
+        orders.filter { it.turn != null && it.description != null }
+            .groupBy { it.turn } // turn 기준 그룹화
+            .map { (_, group) -> group.last() } // 마지막 요청만 사용
+            .sortedBy { it.turn }
+            .map {
+                CookingOrder(
+                    recipe = recipe,
+                    image = it.image,
+                    description = it.description!!,
+                    turn = it.turn!!
+                )
+            }
+
+    /**
+     * Recipe + CookingOrder -> 최종 등록 레시피 DTO (단일 조회 포함, null-safe)
+     */
+    fun toDto(
+            recipe: Recipe,
+            orders: List<CookingOrder>
+    ): RecipeResponseDto.RecipeDetailResponseDto =
+        RecipeResponseDto.RecipeDetailResponseDto(
+            id = recipe.recipeId,
+            thumbnail = recipe.thumbnail,
+            title = recipe.title,
+            subtitle = recipe.subtitle,
+            introduction = recipe.introduction,
+            myCategoryId = recipe.myCategory?.id,
+            cookingTypeId = recipe.cookingType?.id,
+            situationId = recipe.situation?.id,
+            mainIngredientId = recipe.mainIngredient?.id,
+            methodId = recipe.method?.id,
+            headcountId = recipe.headcount?.id,
+            cookingTimeId = recipe.cookingTime?.id,
+            levelId = recipe.level?.id,
+            ingredientInfo = recipe.ingredientInfo,
+            kick = recipe.kick,
+            isPrivate = recipe.isPrivate,
+            video = recipe.video,
+            createdAt = recipe.createdAt,
+            updatedAt = recipe.updatedAt,
+            cookingOrders = orders.sortedBy { it.turn }.map {
+                RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse(
+                    turn = it.turn,
+                    image = it.image,
+                    description = it.description
+                )
+            }
+        )
+
+    /**
+     * Recipe + CookingOrder -> 임시 저장 레시피 DTO (null 허용)
+     */
+    fun toTempDto(
+            recipe: Recipe,
+            orders: List<CookingOrder>
+    ): RecipeResponseDto.TempRecipeDetailResponseDto =
+        RecipeResponseDto.TempRecipeDetailResponseDto(
+            id = recipe.recipeId,
+            thumbnail = recipe.thumbnail,
+            title = recipe.title,
+            subtitle = recipe.subtitle,
+            introduction = recipe.introduction,
+            myCategoryId = recipe.myCategory?.id,
+            cookingTypeId = recipe.cookingType?.id,
+            situationId = recipe.situation?.id,
+            mainIngredientId = recipe.mainIngredient?.id,
+            methodId = recipe.method?.id,
+            headcountId = recipe.headcount?.id,
+            cookingTimeId = recipe.cookingTime?.id,
+            levelId = recipe.level?.id,
+            ingredientInfo = recipe.ingredientInfo,
+            kick = recipe.kick,
+            isPrivate = recipe.isPrivate,
+            video = recipe.video,
+            createdAt = recipe.createdAt,
+            updatedAt = recipe.updatedAt,
+            cookingOrders = orders.sortedBy { it.turn }.map {
+                RecipeResponseDto.TempRecipeDetailResponseDto.CookingOrderResponse(
+                    turn = it.turn,
+                    image = it.image,
+                    description = it.description
+                )
+            }
+        )
+
+    /**
+     * 목록/카드 뷰용 경량 DTO
+     */
+    fun toListItemDto(recipe: Recipe): RecipeResponseDto.MyRecipeListItemResponseDto =
+        RecipeResponseDto.MyRecipeListItemResponseDto(
+            id = recipe.recipeId,
+            thumbnail = recipe.thumbnail,
+            title = recipe.title,
+            subtitle = recipe.subtitle,
+            introduction = recipe.introduction,
+            myCategoryId = recipe.myCategory?.id,
+            createdAt = recipe.createdAt,
+            updatedAt = recipe.updatedAt
+        )
+
+    fun toFeedDto(recipe: Recipe): RecipeResponseDto.FeedResponseDto {
+        return RecipeResponseDto.FeedResponseDto(
+                recipeId = recipe.recipeId,
+                thumbnail = recipe.thumbnail
+        )
+    }
+}
