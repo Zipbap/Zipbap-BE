@@ -29,3 +29,11 @@ Thumbs.db
 *.env
 src/main/resources/application.yml
 src/main/resources/application-*.yml
+
+*application.yml
+*application.yaml
+
+*application-*.yml
+*application-*.yaml
+
+
