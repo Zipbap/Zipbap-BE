@@ -29,6 +29,9 @@ dependencyManagement {
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
         implementation("org.jetbrains.kotlin:kotlin-reflect")
 
+        // Spring Web
+        implementation("org.springframework.boot:spring-boot-starter-web")
+
         // 보안 베이스(공통)
         implementation("org.springframework.boot:spring-boot-starter-security")
         implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
