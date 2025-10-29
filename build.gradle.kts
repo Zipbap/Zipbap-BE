@@ -1,106 +1,35 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	kotlin("plugin.jpa") version "1.9.25"
-	kotlin("kapt") version "1.9.25"
-	id("org.springframework.boot") version "3.5.5"
-	id("io.spring.dependency-management") version "1.1.7"
+	// 중앙에서 버전 관리를 하면서, 중앙에는 이 플러그인들이 적용되지 않도록 apply false 적용
+	// GPT 권장사항에 따라, boot 버전에 맞는 kotlin 버전 적용
+	kotlin("jvm") version "2.0.10" apply false
+	kotlin("plugin.spring") version "2.0.10" apply false
+	kotlin("plugin.jpa") version "2.0.10" apply false
+	kotlin("kapt") version "2.0.10" apply false
+	id("org.springframework.boot") version "3.5.5" apply false
+	id("io.spring.dependency-management") version "1.1.7" apply false
 }
 
-group = "zipbap"
-version = "0.0.1-SNAPSHOT"
-description = "Zipbap API Application"
+allprojects {
+	group = "zipbap"
+	version = "0.1.0"
+	repositories { mavenCentral() }
+}
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+subprojects {
+	plugins.withType<JavaPlugin> {
+		extensions.configure<JavaPluginExtension> {
+			toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+		}
 	}
-}
-
-repositories {
-	mavenCentral()
-}
-
-dependencies {
-	// Spring Web
-	implementation("org.springframework.boot:spring-boot-starter-web")
-
-	// Kotlin 지원
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-
-	// AWS SDK
-	implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
-
-	// JPA & Hibernate
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-
-	// validation
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-
-	// Swagger
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
-
-	// Security
-	implementation ("org.springframework.boot:spring-boot-starter-security")
-	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-
-	// JWT
-	implementation ("io.jsonwebtoken:jjwt-api:0.11.5")
-	runtimeOnly ("io.jsonwebtoken:jjwt-impl:0.11.5")
-	runtimeOnly ("io.jsonwebtoken:jjwt-jackson:0.11.5")
-
-
-	// MariaDB Driver (JDBC 연결)
-	runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
-
-	// Query DSL
-	implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
-	kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
-	kapt("jakarta.annotation:jakarta.annotation-api")
-	kapt("jakarta.persistence:jakarta.persistence-api")
-
-	// 테스트 (Spring Boot Test + JUnit5)
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-kotlin {
-	compilerOptions {
-		freeCompilerArgs.addAll("-Xjsr305=strict")
+	plugins.withId("org.jetbrains.kotlin.jvm") {
+		extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
+			jvmToolchain(17)
+		}
 	}
-}
 
-tasks.withType<Test> {
-	useJUnitPlatform()
-}
-
-// Querydsl 설정부 추가 - start
-val generated = file("src/main/generated")
-
-// querydsl QClass 파일 생성 위치를 지정
-tasks.withType<JavaCompile> {
-	options.generatedSourceOutputDirectory.set(generated)
-}
-
-// kotlin source set 에 querydsl QClass 위치 추가
-sourceSets {
-	main {
-		kotlin.srcDirs += generated
-	}
-}
-
-// gradle clean 시에 QClass 디렉토리 삭제
-tasks.named("clean") {
-	doLast {
-		generated.deleteRecursively()
+	tasks.withType<Test> {
+		useJUnitPlatform()
 	}
 }
 
 
-kapt {
-	generateStubs = true
-}
-
-// Querydsl 설정부 추가 - end
