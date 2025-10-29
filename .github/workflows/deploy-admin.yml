@@ -26,29 +26,25 @@ jobs:
       - name: Docker 이미지 Build 및 Push
         run: |
           IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-admin
-
-          # 롤백용 해시 태그 (예: abc1234)
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
-          # latest + 커밋해시 2개 태그로 빌드
+          echo "🔨 Build Start → $IMAGE_NAME ($SHORT_SHA)"
+
           docker build \
             -t $IMAGE_NAME:latest \
             -t $IMAGE_NAME:${SHORT_SHA} \
-            --build-arg SERVICE=api-admin \
-            .
+            --build-arg SERVICE=api-admin .
 
           docker push $IMAGE_NAME:latest
           docker push $IMAGE_NAME:${SHORT_SHA}
 
-      # 배포 job이 이 SHA 태그를 알 수 있도록 export
-      - name: 아티팩트로 SHORT_SHA 전달
+      - name: SHORT_SHA 전달
         id: meta
         run: |
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
           echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
     outputs:
       short_sha: ${{ steps.meta.outputs.short_sha }}
-
 
   deploy:
     runs-on: ubuntu-latest
@@ -75,20 +71,19 @@ jobs:
             echo "aws_access_key_id=${{ secrets.ADMIN_AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
             echo "aws_secret_access_key=${{ secrets.ADMIN_AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
-            echo "[2] awscli 설치 여부 확인"
-            if ! command -v aws &> /dev/null
-            then
-              sudo apt-get update && sudo apt-get install -y unzip curl docker.io
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip -o awscliv2.zip
-              sudo ./aws/install
-              sudo usermod -aG docker ubuntu || true
+            echo "[2] AWS CLI 설치 보장"
+            sudo apt-get update -y
+            sudo apt-get install -y python3-pip unzip curl
+            if ! command -v aws &> /dev/null; then
+              echo "Installing AWS CLI via pip..."
+              sudo pip install awscli
             fi
+            aws --version || { echo "❌ AWS CLI 설치 실패"; exit 1; }
 
-            echo "[3] 도커 네트워크 준비(zipbap-net)"
+            echo "[3] 도커 네트워크 확인/생성"
             docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
 
-            echo "[4] 애플리케이션 설정(application-admin.yml) 갱신"
+            echo "[4] SSM에서 설정(application-prod.yml) 가져오기"
             aws ssm get-parameter \
               --name "/zipbap-admin/prod/application-prod.yml" \
               --with-decryption \
@@ -96,14 +91,20 @@ jobs:
               --query "Parameter.Value" \
               --output text > /home/ubuntu/application-prod.yml
 
-            echo "[5] 최신 이미지 pull (커밋 해시 태그 우선)"
+            echo "[5] 파일 검증"
+            if [ ! -s /home/ubuntu/application-prod.yml ]; then
+              echo "❌ application-prod.yml 비어 있음. 배포 중단."
+              exit 1
+            fi
+
+            echo "[6] 최신 이미지 Pull"
             docker pull $IMAGE_NAME:${SHORT_SHA} || docker pull $IMAGE_NAME:latest
 
-            echo "[6] 기존 컨테이너 종료"
+            echo "[7] 기존 컨테이너 종료 및 삭제"
             docker stop zipbap-admin || true
             docker rm zipbap-admin || true
 
-            echo "[7] 새 컨테이너 기동"
+            echo "[8] 새 컨테이너 실행"
             docker run -d \
               --name zipbap-admin \
               --network zipbap-net \
@@ -112,14 +113,13 @@ jobs:
               -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
               $IMAGE_NAME:${SHORT_SHA}
 
-            echo "[8] 임시 AWS 크리덴셜 제거 (보안상 깔끔하게)"
+            echo "[9] 임시 AWS 자격증명 삭제"
             rm -rf ~/.aws
 
       - name: Discord 알림 (성공)
         if: success()
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get update && sudo apt-get install -y jq
           SHORT_SHA=${{ needs.build.outputs.short_sha }}
           COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
           curl -H "Content-Type: application/json" \
@@ -146,8 +146,7 @@ jobs:
       - name: Discord 알림 (실패)
         if: failure()
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get update && sudo apt-get install -y jq
           SHORT_SHA=${{ needs.build.outputs.short_sha }}
           COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
           curl -H "Content-Type: application/json" \
