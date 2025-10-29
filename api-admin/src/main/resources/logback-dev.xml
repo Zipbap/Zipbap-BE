@@ -1,34 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true" scanPeriod="60 seconds">
+<configuration scan="false">
 
-    <!-- 콘솔 로그 출력 -->
+    <!-- 콘솔로 찍는 기본 Appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [admin][%thread] %-5level %logger{36} - %msg%n</pattern>
+            <!-- timestamp, level, pid/쓰레드, logger, 메시지 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-<!--    <appender name = "LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
-<!--        <destination>logstash:5000</destination>-->
-<!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />-->
-<!--        <keepAliveDuration>2 minutes</keepAliveDuration>-->
-<!--        <reconnectionDelay>3000</reconnectionDelay>-->
-<!--    </appender>-->
-
-    <!-- 파일 로그 (일별 롤링) -->
-
-    <!-- 특정 패키지별 로그 레벨 -->
-    <logger name="org.springframework" level="INFO"/>
+    <!-- 패키지별 레벨 조정 (원하면 유지) -->
     <logger name="com.zaxxer.hikari" level="WARN"/>
-    <logger name="zipbap.admin" level="DEBUG"/> <!-- 사용자 패키지 -->
-    <logger name="zipbap.global" level="DEBUG"/>
-    <logger name="net.logstash.logback" level="DEBUG"/>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="zipbap" level="DEBUG"/>
 
-    <!-- 루트 로거 -->
+    <!-- 루트 로거: 기본은 INFO -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
-<!--        <appender-ref ref="LOGSTASH"/>-->
     </root>
 
 </configuration>
