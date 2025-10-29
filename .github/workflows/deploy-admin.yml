@@ -90,11 +90,11 @@ jobs:
 
             echo "[4] 애플리케이션 설정(application-admin.yml) 갱신"
             aws ssm get-parameter \
-              --name "/zipbap-admin/prod/application-admin.yml" \
+              --name "/zipbap-admin/prod/application-prod.yml" \
               --with-decryption \
               --region ap-northeast-2 \
               --query "Parameter.Value" \
-              --output text > /home/ubuntu/application-admin.yml
+              --output text > /home/ubuntu/application-prod.yml
 
             echo "[5] 최신 이미지 pull (커밋 해시 태그 우선)"
             docker pull $IMAGE_NAME:${SHORT_SHA} || docker pull $IMAGE_NAME:latest
@@ -109,7 +109,7 @@ jobs:
               --network zipbap-net \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -v /home/ubuntu/application-admin.yml:/app/config/application-prod.yml \
+              -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
               $IMAGE_NAME:${SHORT_SHA}
 
             echo "[8] 임시 AWS 크리덴셜 제거 (보안상 깔끔하게)"
