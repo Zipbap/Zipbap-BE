@@ -10,8 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     if: |
-      (github.repository == 'Kimxxunu/2025_SEASONTHON_TEAM_10_BE' || 
-       github.repository == 'wnd01jun/2025_SEASONTHON_TEAM_10_BE') &&
+      github.repository == 'Zipbap/Zipbap-BE' &&
       github.actor != 'web-flow' &&
       github.actor != 'dependabot[bot]'
 
