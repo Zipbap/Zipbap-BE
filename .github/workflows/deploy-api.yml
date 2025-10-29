@@ -7,14 +7,12 @@ on:
   workflow_call:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     if: |
-      (github.repository == 'Kimxxunu/2025_SEASONTHON_TEAM_10_BE' || 
-       github.repository == 'wnd01jun/2025_SEASONTHON_TEAM_10_BE') &&
+      github.repository == 'Zipbap/Zipbap-BE' &&
       github.actor != 'web-flow' &&
       github.actor != 'dependabot[bot]'
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v3
@@ -28,9 +26,33 @@ jobs:
       - name: Docker 이미지 Build 및 Push
         run: |
           IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-api
-          docker build -t $IMAGE_NAME:latest .
-          docker push $IMAGE_NAME:latest
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
+          docker build \
+            -t $IMAGE_NAME:latest \
+            -t $IMAGE_NAME:${SHORT_SHA} \
+            .
+
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${SHORT_SHA}
+
+      - name: 아티팩트로 SHORT_SHA 전달
+        id: meta
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+    outputs:
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: |
+      github.repository == 'Zipbap/Zipbap-BE' &&
+      github.actor != 'web-flow' &&
+      github.actor != 'dependabot[bot]'
+    steps:
       - name: EC2에 배포
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -38,25 +60,29 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # AWS 자격 증명 파일 생성
+            SHORT_SHA=${{ needs.build.outputs.short_sha }}
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-api
+
+            echo "[1] AWS 자격 증명 구성"
             mkdir -p ~/.aws
             echo "[default]" > ~/.aws/credentials
             echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
             echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
-            # awscli 설치 (없으면)
+            echo "[2] awscli 설치 여부 확인"
             if ! command -v aws &> /dev/null
             then
-              sudo apt-get update && sudo apt-get install -y unzip curl
+              sudo apt-get update && sudo apt-get install -y unzip curl docker.io
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
               unzip -o awscliv2.zip
               sudo ./aws/install
+              sudo usermod -aG docker ubuntu || true
             fi
 
-            # 최신 이미지 pull
-            docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+            echo "[3] 도커 네트워크 준비(zipbap-net)"
+            docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
 
-            # Parameter Store에서 prod.yml 가져오기
+            echo "[4] Parameter Store에서 prod.yml 갱신"
             aws ssm get-parameter \
               --name "/zipbap/prod/application-prod.yml" \
               --with-decryption \
@@ -64,39 +90,41 @@ jobs:
               --query "Parameter.Value" \
               --output text > /home/ubuntu/application-prod.yml
 
-            # 네트워크 생성 (없으면)
-            docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
+            echo "[5] 최신 이미지 pull"
+            docker pull $IMAGE_NAME:${SHORT_SHA} || docker pull $IMAGE_NAME:latest
 
-            # 기존 컨테이너 중단/삭제
+            echo "[6] 기존 컨테이너 종료 및 삭제"
             docker stop zipbap-api || true
             docker rm zipbap-api || true
 
-            # 새 컨테이너 실행 (네트워크 지정 필수)
+            echo "[7] 새 컨테이너 실행"
             docker run -d \
               --name zipbap-api \
               --network zipbap-net \
-              -p 9090:9090 \
+              -p 9090:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
-              ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+              $IMAGE_NAME:${SHORT_SHA}
 
-      - name: Discord 알림 (Success)
+            echo "[8] AWS 자격증명 삭제"
+            rm -rf ~/.aws
+
+      - name: Discord 알림 (성공)
         if: success()
         run: |
-          sudo apt-get install -y jq
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          # 커밋 메시지 안전 escape
+          sudo apt-get update && sudo apt-get install -y jq
+          SHORT_SHA=${{ needs.build.outputs.short_sha }}
           COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
-
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
                  \"embeds\": [{
-                   \"title\": \"✅ 배포 성공\",
-                   \"description\": \"zipbap-backend 서비스가 정상적으로 배포되었습니다! 🚀\",
+                   \"title\": \"✅ 배포 성공 (API)\",
+                   \"description\": \"zipbap-api 서비스가 정상적으로 배포되었습니다! 🚀\",
                    \"color\": 3066993,
                    \"fields\": [
-                     { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
+                     { \"name\": \"서비스\", \"value\": \"zipbap-api\", \"inline\": true },
+                     { \"name\": \"이미지 태그\", \"value\": \"${SHORT_SHA}\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"성공 ✅\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
                      { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
@@ -108,22 +136,22 @@ jobs:
                }" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: Discord 알림 (Failure)
+      - name: Discord 알림 (실패)
         if: failure()
         run: |
-          sudo apt-get install -y jq
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          sudo apt-get update && sudo apt-get install -y jq
+          SHORT_SHA=${{ needs.build.outputs.short_sha }}
           COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
-
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
                  \"embeds\": [{
-                   \"title\": \"❌ 배포 실패\",
-                   \"description\": \"zipbap-backend 서비스 배포 중 문제가 발생했습니다.\",
+                   \"title\": \"❌ 배포 실패 (API)\",
+                   \"description\": \"zipbap-api 서비스 배포 중 문제가 발생했습니다.\",
                    \"color\": 15158332,
                    \"fields\": [
-                     { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
+                     { \"name\": \"서비스\", \"value\": \"zipbap-api\", \"inline\": true },
+                     { \"name\": \"이미지 태그\", \"value\": \"${SHORT_SHA}\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"실패 ❌\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
                      { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },

@@ -7,13 +7,12 @@ on:
   workflow_call:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     if: |
       github.repository == 'Zipbap/Zipbap-BE' &&
       github.actor != 'web-flow' &&
       github.actor != 'dependabot[bot]'
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v3
@@ -27,35 +26,69 @@ jobs:
       - name: Docker 이미지 Build 및 Push
         run: |
           IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-admin
-          docker build -t $IMAGE_NAME:latest --build-arg SERVICE=api-admin .
-          docker push $IMAGE_NAME:latest
 
+          # 롤백용 해시 태그 (예: abc1234)
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+
+          # latest + 커밋해시 2개 태그로 빌드
+          docker build \
+            -t $IMAGE_NAME:latest \
+            -t $IMAGE_NAME:${SHORT_SHA} \
+            --build-arg SERVICE=api-admin \
+            .
+
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${SHORT_SHA}
+
+      # 배포 job이 이 SHA 태그를 알 수 있도록 export
+      - name: 아티팩트로 SHORT_SHA 전달
+        id: meta
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+    outputs:
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: |
+      github.repository == 'Zipbap/Zipbap-BE' &&
+      github.actor != 'web-flow' &&
+      github.actor != 'dependabot[bot]'
+    steps:
       - name: EC2에 배포
+        id: ssh_deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.ADMIN_EC2_HOST_ADMIN }}
           username: ubuntu
           key: ${{ secrets.ADMIN_EC2_SSH_KEY }}
           script: |
-            # AWS 자격 증명 파일 생성
+            SHORT_SHA=${{ needs.build.outputs.short_sha }}
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-admin
+
+            echo "[1] AWS 자격 증명 구성"
             mkdir -p ~/.aws
             echo "[default]" > ~/.aws/credentials
             echo "aws_access_key_id=${{ secrets.ADMIN_AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
             echo "aws_secret_access_key=${{ secrets.ADMIN_AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
-            # awscli 설치 (없으면)
+            echo "[2] awscli 설치 여부 확인"
             if ! command -v aws &> /dev/null
             then
-              sudo apt-get update && sudo apt-get install -y unzip curl
+              sudo apt-get update && sudo apt-get install -y unzip curl docker.io
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
               unzip -o awscliv2.zip
               sudo ./aws/install
+              sudo usermod -aG docker ubuntu || true
             fi
 
-            # 최신 이미지 pull
-            docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-admin:latest
+            echo "[3] 도커 네트워크 준비(zipbap-net)"
+            docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
 
-            # Parameter Store에서 prod-admin.yml 가져오기
+            echo "[4] 애플리케이션 설정(application-admin.yml) 갱신"
             aws ssm get-parameter \
               --name "/zipbap-admin/prod/application-admin.yml" \
               --with-decryption \
@@ -63,30 +96,32 @@ jobs:
               --query "Parameter.Value" \
               --output text > /home/ubuntu/application-admin.yml
 
-            # 네트워크 생성 (없으면)
-            docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
+            echo "[5] 최신 이미지 pull (커밋 해시 태그 우선)"
+            docker pull $IMAGE_NAME:${SHORT_SHA} || docker pull $IMAGE_NAME:latest
 
-            # 기존 컨테이너 중단/삭제
+            echo "[6] 기존 컨테이너 종료"
             docker stop zipbap-admin || true
             docker rm zipbap-admin || true
 
-            # 새 컨테이너 실행 (네트워크 지정 필수)
+            echo "[7] 새 컨테이너 기동"
             docker run -d \
               --name zipbap-admin \
               --network zipbap-net \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -v /home/ubuntu/application-admin.yml:/app/config/application-prod.yml \
-              ${{ secrets.DOCKER_USERNAME }}/zipbap-admin:latest
+              $IMAGE_NAME:${SHORT_SHA}
 
-      - name: Discord 알림 (Success)
+            echo "[8] 임시 AWS 크리덴셜 제거 (보안상 깔끔하게)"
+            rm -rf ~/.aws
+
+      - name: Discord 알림 (성공)
         if: success()
         run: |
+          sudo apt-get update
           sudo apt-get install -y jq
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          # 커밋 메시지 안전 escape
+          SHORT_SHA=${{ needs.build.outputs.short_sha }}
           COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
-
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
@@ -96,6 +131,7 @@ jobs:
                    \"color\": 3066993,
                    \"fields\": [
                      { \"name\": \"서비스\", \"value\": \"zipbap-admin\", \"inline\": true },
+                     { \"name\": \"이미지 태그\", \"value\": \"${SHORT_SHA}\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"성공 ✅\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
                      { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
@@ -107,13 +143,13 @@ jobs:
                }" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: Discord 알림 (Failure)
+      - name: Discord 알림 (실패)
         if: failure()
         run: |
+          sudo apt-get update
           sudo apt-get install -y jq
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          SHORT_SHA=${{ needs.build.outputs.short_sha }}
           COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
-
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
@@ -123,6 +159,7 @@ jobs:
                    \"color\": 15158332,
                    \"fields\": [
                      { \"name\": \"서비스\", \"value\": \"zipbap-admin\", \"inline\": true },
+                     { \"name\": \"이미지 태그\", \"value\": \"${SHORT_SHA}\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"실패 ❌\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
                      { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
