@@ -29,16 +29,6 @@ jobs:
           docker build -t $IMAGE_NAME:latest .
           docker push $IMAGE_NAME:latest
 
-      - name: ELK 폴더 업로드(EC2)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "elk/*"
-          target: "/home/ubuntu/elk"
-          strip_components: 1
-
       - name: EC2에 배포
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -71,14 +61,6 @@ jobs:
               --region ap-northeast-2 \
               --query "Parameter.Value" \
               --output text > /home/ubuntu/application-prod.yml
-            
-            # Parameter Store에서 ELK env 가져오기
-            aws ssm get-parameter \
-              --name "/zipbap/prod/elk/.env" \
-              --with-decryption \
-              --region ap-northeast-2 \
-              --query "Parameter.Value" \
-              --output text > /home/ubuntu/elk/.env
 
             # 네트워크 생성 (없으면)
             docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
