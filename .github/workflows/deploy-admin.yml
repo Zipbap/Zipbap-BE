@@ -62,7 +62,7 @@ jobs:
         id: ssh_deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.ADMIN_EC2_HOST_ADMIN }}
+          host: ${{ secrets.ADMIN_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.ADMIN_EC2_SSH_KEY }}
           script: |
