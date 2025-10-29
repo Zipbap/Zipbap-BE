@@ -1,8 +1,10 @@
-name: CI/CD to EC2 with Docker & SSM
+name: Zipbap 관리자 서버 CI/CD (EC2 배포)
 
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   deploy:
@@ -25,22 +27,22 @@ jobs:
 
       - name: Docker 이미지 Build 및 Push
         run: |
-          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-api
-          docker build -t $IMAGE_NAME:latest .
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-admin
+          docker build -t $IMAGE_NAME:latest --build-arg SERVICE=api-admin .
           docker push $IMAGE_NAME:latest
 
       - name: EC2에 배포
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.ADMIN_EC2_HOST_ADMIN }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.ADMIN_EC2_SSH_KEY }}
           script: |
             # AWS 자격 증명 파일 생성
             mkdir -p ~/.aws
             echo "[default]" > ~/.aws/credentials
-            echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-            echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+            echo "aws_access_key_id=${{ secrets.ADMIN_AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key=${{ secrets.ADMIN_AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
             # awscli 설치 (없으면)
             if ! command -v aws &> /dev/null
@@ -52,34 +54,31 @@ jobs:
             fi
 
             # 최신 이미지 pull
-            docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-admin:latest
 
-            # Parameter Store에서 prod.yml 가져오기
+            # Parameter Store에서 prod-admin.yml 가져오기
             aws ssm get-parameter \
-              --name "/zipbap/prod/application-prod.yml" \
+              --name "/zipbap-admin/prod/application-admin.yml" \
               --with-decryption \
               --region ap-northeast-2 \
               --query "Parameter.Value" \
-              --output text > /home/ubuntu/application-prod.yml
+              --output text > /home/ubuntu/application-admin.yml
 
             # 네트워크 생성 (없으면)
             docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
 
-            # mariadb 컨테이너가 네트워크에 붙어있는지 확인 후 연결
-            docker network connect zipbap-net mariadb || true
-
             # 기존 컨테이너 중단/삭제
-            docker stop zipbap-api || true
-            docker rm zipbap-api || true
+            docker stop zipbap-admin || true
+            docker rm zipbap-admin || true
 
             # 새 컨테이너 실행 (네트워크 지정 필수)
             docker run -d \
-              --name zipbap-api \
+              --name zipbap-admin \
               --network zipbap-net \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
-              -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
-              ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+              -v /home/ubuntu/application-admin.yml:/app/config/application-prod.yml \
+              ${{ secrets.DOCKER_USERNAME }}/zipbap-admin:latest
 
       - name: Discord 알림 (Success)
         if: success()
@@ -93,11 +92,11 @@ jobs:
                -X POST \
                -d "{
                  \"embeds\": [{
-                   \"title\": \"✅ 배포 성공\",
-                   \"description\": \"zipbap-backend 서비스가 정상적으로 배포되었습니다! 🚀\",
+                   \"title\": \"✅ 배포 성공 (Admin)\",
+                   \"description\": \"zipbap-admin 서비스가 정상적으로 배포되었습니다! 🚀\",
                    \"color\": 3066993,
                    \"fields\": [
-                     { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
+                     { \"name\": \"서비스\", \"value\": \"zipbap-admin\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"성공 ✅\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
                      { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
@@ -120,11 +119,11 @@ jobs:
                -X POST \
                -d "{
                  \"embeds\": [{
-                   \"title\": \"❌ 배포 실패\",
-                   \"description\": \"zipbap-backend 서비스 배포 중 문제가 발생했습니다.\",
+                   \"title\": \"❌ 배포 실패 (Admin)\",
+                   \"description\": \"zipbap-admin 서비스 배포 중 문제가 발생했습니다.\",
                    \"color\": 15158332,
                    \"fields\": [
-                     { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
+                     { \"name\": \"서비스\", \"value\": \"zipbap-admin\", \"inline\": true },
                      { \"name\": \"상태\", \"value\": \"실패 ❌\", \"inline\": true },
                      { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
                      { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },

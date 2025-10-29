@@ -1,0 +1,14 @@
+name: Zipbap 전체 배포 (API + Admin)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-api:
+    name: Zipbap 프로덕션 서버 배포 (API)
+    uses: ./.github/workflows/deploy-api.yml
+
+  deploy-admin:
+    name: Zipbap 관리자 서버 배포 (Admin)
+    needs: deploy-api
+    uses: ./.github/workflows/deploy-admin.yml

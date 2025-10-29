@@ -1,0 +1,136 @@
+name: Zipbap 프로덕션 서버 CI/CD (EC2 배포)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: |
+      (github.repository == 'Kimxxunu/2025_SEASONTHON_TEAM_10_BE' || 
+       github.repository == 'wnd01jun/2025_SEASONTHON_TEAM_10_BE') &&
+      github.actor != 'web-flow' &&
+      github.actor != 'dependabot[bot]'
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker 이미지 Build 및 Push
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/zipbap-api
+          docker build -t $IMAGE_NAME:latest .
+          docker push $IMAGE_NAME:latest
+
+      - name: EC2에 배포
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # AWS 자격 증명 파일 생성
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+            # awscli 설치 (없으면)
+            if ! command -v aws &> /dev/null
+            then
+              sudo apt-get update && sudo apt-get install -y unzip curl
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -o awscliv2.zip
+              sudo ./aws/install
+            fi
+
+            # 최신 이미지 pull
+            docker pull ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+
+            # Parameter Store에서 prod.yml 가져오기
+            aws ssm get-parameter \
+              --name "/zipbap/prod/application-prod.yml" \
+              --with-decryption \
+              --region ap-northeast-2 \
+              --query "Parameter.Value" \
+              --output text > /home/ubuntu/application-prod.yml
+
+            # 네트워크 생성 (없으면)
+            docker network inspect zipbap-net >/dev/null 2>&1 || docker network create zipbap-net
+
+            # 기존 컨테이너 중단/삭제
+            docker stop zipbap-api || true
+            docker rm zipbap-api || true
+
+            # 새 컨테이너 실행 (네트워크 지정 필수)
+            docker run -d \
+              --name zipbap-api \
+              --network zipbap-net \
+              -p 9090:9090 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -v /home/ubuntu/application-prod.yml:/app/config/application-prod.yml \
+              ${{ secrets.DOCKER_USERNAME }}/zipbap-api:latest
+
+      - name: Discord 알림 (Success)
+        if: success()
+        run: |
+          sudo apt-get install -y jq
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          # 커밋 메시지 안전 escape
+          COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"✅ 배포 성공\",
+                   \"description\": \"zipbap-backend 서비스가 정상적으로 배포되었습니다! 🚀\",
+                   \"color\": 3066993,
+                   \"fields\": [
+                     { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
+                     { \"name\": \"상태\", \"value\": \"성공 ✅\", \"inline\": true },
+                     { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
+                     { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
+                     { \"name\": \"배포자\", \"value\": \"@${GITHUB_ACTOR}\", \"inline\": true }
+                   ],
+                   \"footer\": { \"text\": \"GitHub Actions • main 브랜치\" },
+                   \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                 }]
+               }" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Discord 알림 (Failure)
+        if: failure()
+        run: |
+          sudo apt-get install -y jq
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          COMMIT_MSG=$(jq -Rs . <<< "${{ github.event.head_commit.message }}")
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"❌ 배포 실패\",
+                   \"description\": \"zipbap-backend 서비스 배포 중 문제가 발생했습니다.\",
+                   \"color\": 15158332,
+                   \"fields\": [
+                     { \"name\": \"서비스\", \"value\": \"zipbap-backend\", \"inline\": true },
+                     { \"name\": \"상태\", \"value\": \"실패 ❌\", \"inline\": true },
+                     { \"name\": \"Commit SHA\", \"value\": \"\`${SHORT_SHA}\`\" },
+                     { \"name\": \"Commit 메시지\", \"value\": ${COMMIT_MSG} },
+                     { \"name\": \"배포자\", \"value\": \"@${GITHUB_ACTOR}\", \"inline\": true }
+                   ],
+                   \"footer\": { \"text\": \"GitHub Actions • main 브랜치\" },
+                   \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                 }]
+               }" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
