@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
@@ -47,7 +48,7 @@ class AuthController(
         return customOAuth2UserService.loadUser(request)
     }
 
-    @GetMapping("/{registration}/login")
+    @PostMapping("/{registration}/login")
     fun login(@PathVariable registration: String,
               @RequestBody dto: LoginRequestDto): ApiResponse<LoginResponseDto> {
         return ApiResponse.onSuccess(socialLoginService.loginWithSocialAccessToken(registration, dto))

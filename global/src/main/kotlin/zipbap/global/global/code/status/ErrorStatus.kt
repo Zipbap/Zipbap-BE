@@ -76,7 +76,10 @@ enum class ErrorStatus(
     OAUTH2_LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN401", "OAuth2 Login 과정에서 에러가 발생했습니다."),
     INVALID_REGISTRATION(HttpStatus.BAD_REQUEST, "REGISTRATION400", "잘못된 REGISTRATION입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404", "해당 유저를 찾을 수 없습니다."),
-    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "TOKEN401", "잘못되거나 만료된 토큰입니다.");
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "TOKEN401", "잘못되거나 만료된 토큰입니다."),
+
+    // 카카오
+    SOCIAL_LOGIN_MISSING_FIELD(HttpStatus.BAD_REQUEST, "KAKAO400", "카카오 로그인에 필요한 필수 정보(이메일 또는 프로필)가 제공되지 않았습니다.");
 
     override val reason: ErrorReasonDto
         get() = ErrorReasonDto(httpStatus, false, code, message)
