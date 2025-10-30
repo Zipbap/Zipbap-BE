@@ -77,3 +77,7 @@ dependencyManagement {
 
     kapt { generateStubs = true }
 // -------------------------------------------------------
+
+tasks.withType<Jar> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
