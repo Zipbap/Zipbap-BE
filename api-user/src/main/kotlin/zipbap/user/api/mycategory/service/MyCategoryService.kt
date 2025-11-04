@@ -38,7 +38,7 @@ class MyCategoryService(
         }
 
         // 사용자별 카테고리 수 → 다음 시퀀스
-        val seq = myCategoryRepository.countByUserId(userId) + 1
+        val seq = myCategoryRepository.findMaxSequenceByUserId(userId)
         val id = CustomIdGenerator.generate("MC", userId, seq)
 
         val entity = MyCategory(id = id, user = user, name = dto.name)

@@ -38,7 +38,7 @@ class BookmarkService(
             throw GeneralException(ErrorStatus.ALREADY_BOOKMARK_RECIPE)
         }
 
-        val sequence = bookmarkRepository.countByUserId(user.id!!) + 1
+        val sequence = bookmarkRepository.findMaxSequenceByUserId(user.id!!) + 1
         val generatedId = CustomIdGenerator.generate("BM", user.id!!, sequence)
 
 

@@ -2,6 +2,7 @@ package zipbap.global.domain.bookmark
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import zipbap.global.domain.bookmark.Bookmark
 import zipbap.global.domain.recipe.Recipe
 import zipbap.global.domain.recipe.RecipeStatus
@@ -20,5 +21,10 @@ interface BookmarkRepository : JpaRepository<Bookmark, Long> {
             "WHERE b.user = :user AND b.recipe.recipeStatus = :recipeStatus ")
     fun findByUser(user: User, recipeStatus: RecipeStatus): List<Bookmark>
 
+    @Query(
+            "SELECT COALESCE(MAX(CAST(SUBSTRING(b.bookmarkId, LENGTH(CONCAT('BM-', :userId, '-')) + 1) AS long)), 0) " +
+                    "FROM Bookmark b WHERE b.user.id = :userId"
+    )
+    fun findMaxSequenceByUserId(@Param("userId") userId: Long): Long
 
 }
