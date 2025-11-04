@@ -126,6 +126,12 @@ interface RecipeDocs {
             @UserInjection user: User,
             @RequestParam(name = "myCategoryId", required = false) myCategoryIds: List<String>?
     ): ApiResponse<List<RecipeResponseDto.MyRecipeListItemResponseDto>>
+
+    @DeleteMapping("/{recipeId}")
+    fun deleteRecipe(
+            @UserInjection user: User,
+            @PathVariable("recipeId") recipeId: String
+    ): ApiResponse<String>
 }
 
 

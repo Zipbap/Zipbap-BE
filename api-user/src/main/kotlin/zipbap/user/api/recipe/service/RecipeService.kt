@@ -261,4 +261,14 @@ class RecipeService(
             RecipeConverter.toFeedDto(it)
         }.toList()
     }
+
+    @Transactional
+    fun deleteRecipe(recipeId: String,
+                     userId: Long) {
+        val recipe = recipeRepository.findById(recipeId)
+                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
+
+        recipeRepository.delete(recipe)
+    }
 }
