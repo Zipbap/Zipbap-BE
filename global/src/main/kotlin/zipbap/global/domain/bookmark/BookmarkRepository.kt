@@ -10,8 +10,6 @@ import zipbap.global.domain.user.User
 
 interface BookmarkRepository : JpaRepository<Bookmark, Long> {
 
-
-
     fun deleteByUserAndRecipe(user: User, recipe: Recipe)
     fun existsByUserAndRecipe(user: User, recipe: Recipe): Boolean
     fun countByRecipe(recipe: Recipe): Long
@@ -21,10 +19,6 @@ interface BookmarkRepository : JpaRepository<Bookmark, Long> {
             "WHERE b.user = :user AND b.recipe.recipeStatus = :recipeStatus ")
     fun findByUser(user: User, recipeStatus: RecipeStatus): List<Bookmark>
 
-    @Query(
-            "SELECT COALESCE(MAX(CAST(SUBSTRING(b.id, LENGTH(CONCAT('BM-', :userId, '-')) + 1) AS long)), 0) " +
-                    "FROM Bookmark b WHERE b.user.id = :userId"
-    )
-    fun findMaxSequenceByUserId(@Param("userId") userId: Long): Long
+    fun findTopByUserIdOrderByIdDesc(userId: Long): Bookmark?
 
 }

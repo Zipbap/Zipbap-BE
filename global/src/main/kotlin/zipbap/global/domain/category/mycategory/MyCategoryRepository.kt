@@ -14,4 +14,7 @@ interface MyCategoryRepository : JpaRepository<MyCategory, String> {
                     "FROM MyCategory c WHERE c.user.id = :userId"
     )
     fun findMaxSequenceByUserId(@Param("userId") userId: Long): Long
+
+    fun findTopByUserIdOrderByIdDesc(userId: Long): MyCategory?
+
 }
