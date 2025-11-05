@@ -55,8 +55,10 @@ class RecipeController(
     ): ApiResponse<List<RecipeResponseDto.MyRecipeListItemResponseDto>> =
         ApiResponse.onSuccess(recipeService.getMyActiveRecipesFiltered(user.id!!, myCategoryIds))
 
-    override fun deleteRecipe(user: User, recipeId: String): ApiResponse<String> {
-        recipeService
+    override fun deleteRecipe(
+            @UserInjection user: User,
+            recipeId: String): ApiResponse<String> {
+        recipeService.deleteRecipe(recipeId, user.id!!)
         return ApiResponse.onSuccess("Delete Success!")
     }
 }
