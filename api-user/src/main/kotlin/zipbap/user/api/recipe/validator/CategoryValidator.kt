@@ -78,6 +78,29 @@ class CategoryValidator(
         )
     }
 
+    fun validateOptional(dto: CategoryValidatable): ValidatedCategories {
+        val myCategory = validateOptional(dto.myCategoryId, myCategoryRepository, ErrorStatus.CATEGORY_NOT_FOUND)
+        val cookingType = validateOptional(dto.cookingTypeId, cookingTypeRepository, ErrorStatus.COOKING_TYPE_NOT_FOUND)
+        val situation = validateOptional(dto.situationId, situationRepository, ErrorStatus.SITUATION_NOT_FOUND)
+        val mainIngredient = validateOptional(dto.mainIngredientId, mainIngredientRepository, ErrorStatus.MAIN_INGREDIENT_NOT_FOUND)
+        val method = validateOptional(dto.methodId, methodRepository, ErrorStatus.METHOD_NOT_FOUND)
+        val headcount = validateOptional(dto.headcountId, headcountRepository, ErrorStatus.HEADCOUNT_NOT_FOUND)
+        val cookingTime = validateOptional(dto.cookingTimeId, cookingTimeRepository, ErrorStatus.COOKING_TIME_NOT_FOUND)
+        val level = validateOptional(dto.levelId, levelRepository, ErrorStatus.LEVEL_NOT_FOUND)
+
+        return ValidatedCategories(
+            myCategory = myCategory,
+            cookingType = cookingType,
+            situation = situation,
+            mainIngredient = mainIngredient,
+            method = method,
+            headcount = headcount,
+            cookingTime = cookingTime,
+            level = level
+        )
+    }
+
+
     private fun <T, ID> validateOptional(
         id: ID?,
         repo: JpaRepository<T, ID>,

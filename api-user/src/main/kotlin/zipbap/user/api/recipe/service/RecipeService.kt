@@ -60,6 +60,8 @@ class RecipeService(
 
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
+        val categories = categoryValidator.validateOptional(dto)
+
         // 요청에서 사용된 파일 URL 수집
         val usedFileUrls = mutableSetOf<String>()
         dto.video?.let { usedFileUrls.add(it) }
@@ -78,6 +80,16 @@ class RecipeService(
             video = dto.video ?: video
             kick = dto.kick ?: kick
             isPrivate = dto.isPrivate ?: isPrivate
+
+            categories.myCategory?.let { myCategory = it }
+            categories.cookingType?.let { cookingType = it }
+            categories.situation?.let { situation = it }
+            categories.mainIngredient?.let { mainIngredient = it }
+            categories.method?.let { method = it }
+            categories.headcount?.let { headcount = it }
+            categories.cookingTime?.let { cookingTime = it }
+            categories.level?.let { level = it }
+
         }
 
         val savedRecipe = recipeRepository.save(recipe)
