@@ -1,7 +1,7 @@
 package zipbap.global.domain.recipe
 
 import jakarta.persistence.*
-import zipbap.global.domain.base.StringIdBaseEntity
+import zipbap.global.domain.base.BaseEntity
 import zipbap.global.domain.category.cookingtime.CookingTime
 import zipbap.global.domain.category.cookingtype.CookingType
 import zipbap.global.domain.category.headcount.Headcount
@@ -85,10 +85,8 @@ class Recipe(
 
         @Id
         @Column(name = "id", length = 40)
-        val recipeId: String // RC-{userId}-{sequence}
+        val id: String // RC-{userId}-{sequence}
 
-) : StringIdBaseEntity() {
-        override fun getId(): String {
-                return this.recipeId
-        }
+) : BaseEntity() {
+
 }

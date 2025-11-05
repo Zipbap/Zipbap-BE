@@ -22,7 +22,7 @@ interface BookmarkRepository : JpaRepository<Bookmark, Long> {
     fun findByUser(user: User, recipeStatus: RecipeStatus): List<Bookmark>
 
     @Query(
-            "SELECT COALESCE(MAX(CAST(SUBSTRING(b.bookmarkId, LENGTH(CONCAT('BM-', :userId, '-')) + 1) AS long)), 0) " +
+            "SELECT COALESCE(MAX(CAST(SUBSTRING(b.id, LENGTH(CONCAT('BM-', :userId, '-')) + 1) AS long)), 0) " +
                     "FROM Bookmark b WHERE b.user.id = :userId"
     )
     fun findMaxSequenceByUserId(@Param("userId") userId: Long): Long

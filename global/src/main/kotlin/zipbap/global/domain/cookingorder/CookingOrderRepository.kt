@@ -14,7 +14,7 @@ interface CookingOrderRepository : JpaRepository<CookingOrder, Long> {
      * 특정 레시피에 속한 모든 조리 순서 물리 삭제 (배치 JPQL)
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("delete from CookingOrder co where co.recipe.recipeId = :recipeId")
+    @Query("delete from CookingOrder co where co.recipe.id = :recipeId")
     fun deleteAllByRecipeId(@Param("recipeId") recipeId: String): Int
 
     /**

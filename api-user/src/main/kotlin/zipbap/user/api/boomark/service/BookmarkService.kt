@@ -45,7 +45,7 @@ class BookmarkService(
         bookmarkRepository.save(Bookmark(user, recipe, generatedId))
         val count = bookmarkRepository.countByRecipe(recipe)
 
-        return BookmarkConverter.toSimpleDto(recipe.recipeId, count)
+        return BookmarkConverter.toSimpleDto(recipe.id, count)
     }
 
     /**
@@ -69,7 +69,7 @@ class BookmarkService(
         bookmarkRepository.deleteByUserAndRecipe(user, recipe)
         val count = bookmarkRepository.countByRecipe(recipe)
 
-        return BookmarkConverter.toSimpleDto(recipe.recipeId, count)
+        return BookmarkConverter.toSimpleDto(recipe.id, count)
     }
 
     /**
@@ -85,7 +85,7 @@ class BookmarkService(
 
         val count = bookmarkRepository.countByRecipe(recipe)
 
-        return BookmarkConverter.toSimpleDto(recipe.recipeId, count)
+        return BookmarkConverter.toSimpleDto(recipe.id, count)
     }
 
     fun getMarkedRecipe(user: User): List<BookmarkResponseDto.BookmarkRecipeResponseDto> {

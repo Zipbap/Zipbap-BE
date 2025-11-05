@@ -14,7 +14,7 @@ object BookmarkConverter {
 
     fun toThumbnailDto(recipe: Recipe): BookmarkResponseDto.BookmarkRecipeResponseDto {
         return BookmarkResponseDto.BookmarkRecipeResponseDto(
-                recipeId = recipe.recipeId,
+                recipeId = recipe.id,
                 thumbnailImage = recipe.thumbnail
                 )
     }

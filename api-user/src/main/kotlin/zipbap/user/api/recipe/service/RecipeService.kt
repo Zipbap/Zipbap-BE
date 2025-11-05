@@ -156,7 +156,7 @@ class RecipeService(
     fun getMyTempRecipes(userId: Long): List<RecipeResponseDto.TempRecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.TEMPORARY)
         return recipes.map { recipe ->
-            val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
+            val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
             RecipeConverter.toTempDto(recipe, orders)
         }
     }
@@ -168,7 +168,7 @@ class RecipeService(
     fun getMyRecipes(userId: Long): List<RecipeResponseDto.RecipeDetailResponseDto> {
         val recipes = recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
         return recipes.map { recipe ->
-            val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
+            val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
             RecipeConverter.toDto(recipe, orders)
         }
     }
@@ -226,7 +226,7 @@ class RecipeService(
         recipe.viewCount += 1
         val savedRecipe = recipeRepository.save(recipe)
 
-        val orders = cookingOrderRepository.findAllByRecipeId(recipe.recipeId)
+        val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
         return RecipeConverter.toDto(savedRecipe, orders)
     }
 

@@ -25,7 +25,7 @@ object RecipeConverter {
         user: User
     ): Recipe =
         Recipe(
-            recipeId = id,
+            id = id,
             user = user,
             isPrivate = true,
             recipeStatus = RecipeStatus.TEMPORARY
@@ -48,7 +48,7 @@ object RecipeConverter {
             level: Level
     ): Recipe =
         Recipe(
-            recipeId = id,
+            id = id,
             user = user,
             thumbnail = dto.thumbnail,
             title = dto.title,
@@ -114,7 +114,7 @@ object RecipeConverter {
             orders: List<CookingOrder>
     ): RecipeResponseDto.RecipeDetailResponseDto =
         RecipeResponseDto.RecipeDetailResponseDto(
-            id = recipe.recipeId,
+            id = recipe.id,
             thumbnail = recipe.thumbnail,
             title = recipe.title,
             subtitle = recipe.subtitle,
@@ -150,7 +150,7 @@ object RecipeConverter {
             orders: List<CookingOrder>
     ): RecipeResponseDto.TempRecipeDetailResponseDto =
         RecipeResponseDto.TempRecipeDetailResponseDto(
-            id = recipe.recipeId,
+            id = recipe.id,
             thumbnail = recipe.thumbnail,
             title = recipe.title,
             subtitle = recipe.subtitle,
@@ -183,7 +183,7 @@ object RecipeConverter {
      */
     fun toListItemDto(recipe: Recipe): RecipeResponseDto.MyRecipeListItemResponseDto =
         RecipeResponseDto.MyRecipeListItemResponseDto(
-            id = recipe.recipeId,
+            id = recipe.id,
             thumbnail = recipe.thumbnail,
             title = recipe.title,
             subtitle = recipe.subtitle,
@@ -195,7 +195,7 @@ object RecipeConverter {
 
     fun toFeedDto(recipe: Recipe): RecipeResponseDto.FeedResponseDto {
         return RecipeResponseDto.FeedResponseDto(
-                recipeId = recipe.recipeId,
+                recipeId = recipe.id,
                 thumbnail = recipe.thumbnail
         )
     }

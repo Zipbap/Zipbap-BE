@@ -1,7 +1,7 @@
 package zipbap.global.domain.bookmark
 
 import jakarta.persistence.*
-import zipbap.global.domain.base.StringIdBaseEntity
+import zipbap.global.domain.base.BaseEntity
 import zipbap.global.domain.recipe.Recipe
 import zipbap.global.domain.user.User
 
@@ -24,9 +24,6 @@ class Bookmark(
 
         @Id
         @Column(name = "id", length = 40)
-        val bookmarkId: String, // BM-{userId}-{sequence}
-) : StringIdBaseEntity() {
-        override fun getId(): String {
-                return this.bookmarkId
-        }
+        val id: String, // BM-{userId}-{sequence}
+) : BaseEntity() {
 }
