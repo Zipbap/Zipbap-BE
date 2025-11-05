@@ -74,7 +74,7 @@ class MyPageQueryRepository(
                 .select(
                         Projections.constructor(
                                 MyPageQueryResult.RecipeCard::class.java,
-                                r.recipeId, r.title, r.subtitle, r.thumbnail, r.createdAt
+                                r.id, r.title, r.subtitle, r.thumbnail, r.createdAt
                         )
                 )
                 .from(b)
@@ -86,7 +86,7 @@ class MyPageQueryRepository(
                 .fetch()
 
         val total = query
-                .select(b.bookmarkId.count())
+                .select(b.id.count())
                 .from(b)
                 .join(b.recipe, r)
                 .where(where)
@@ -109,7 +109,7 @@ class MyPageQueryRepository(
                 .select(
                         Projections.constructor(
                                 MyPageQueryResult.RecipeCard::class.java,
-                                r.recipeId, r.title, r.subtitle, r.thumbnail, r.createdAt
+                                r.id, r.title, r.subtitle, r.thumbnail, r.createdAt
                         )
                 )
                 .from(r)
