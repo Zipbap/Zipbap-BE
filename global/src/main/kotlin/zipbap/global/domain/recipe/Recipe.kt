@@ -10,6 +10,7 @@ import zipbap.global.domain.category.mainingredient.MainIngredient
 import zipbap.global.domain.category.method.Method
 import zipbap.global.domain.category.mycategory.MyCategory
 import zipbap.global.domain.category.situation.Situation
+import zipbap.global.domain.cookingorder.CookingOrder
 import zipbap.global.domain.user.User
 
 @Entity
@@ -82,6 +83,9 @@ class Recipe(
         @Enumerated(EnumType.STRING)
         @Column(name = "recipe_status", nullable = false)
         var recipeStatus: RecipeStatus = RecipeStatus.TEMPORARY,
+
+        @OneToMany(mappedBy = "recipe", cascade = [CascadeType.ALL], orphanRemoval = true)
+        var cookingOrders: MutableList<CookingOrder> = mutableListOf(),
 
         @Id
         @Column(name = "id", length = 40)
