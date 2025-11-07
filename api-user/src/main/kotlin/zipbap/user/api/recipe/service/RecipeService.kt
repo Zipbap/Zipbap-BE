@@ -36,7 +36,9 @@ class RecipeService(
             throw GeneralException(ErrorStatus.RECIPE_BAD_REQUEST)
         }
 
-        val sequence = recipeRepository.countByUserId(userId) + 1
+        val tmp = recipeRepository.findTopByUserIdOrderByIdDesc(userId)
+        val sequence = tmp?.id?.split("-")?.lastOrNull()?.toLongOrNull() ?: 0L
+
         val generatedId = CustomIdGenerator.generate("RC", userId, sequence)
         val userRef = userRepository.getReferenceById(userId)
 

@@ -28,4 +28,6 @@ interface RecipeRepository : JpaRepository<Recipe, String> {
     )
     fun findAllFeed(@Param("userId") userId: Long, @Param("recipeStatus") recipeStatus: RecipeStatus,
                     @Param("isPrivate") isPrivate: Boolean): List<Recipe>
+
+    fun findTopByUserIdOrderByIdDesc(userId: Long): Recipe?
 }
