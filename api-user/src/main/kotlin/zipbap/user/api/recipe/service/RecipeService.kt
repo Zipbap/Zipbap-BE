@@ -24,7 +24,7 @@ class RecipeService(
         private val cookingOrderRepository: CookingOrderRepository,
         private val userRepository: UserRepository,
         private val categoryValidator: CategoryValidator,
-        private val fileRepository: FileRepository,
+        private val recipeFileService: RecipeFileService
 ) {
 
     /**
@@ -70,7 +70,7 @@ class RecipeService(
         dto.cookingOrders?.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
         // 파일 상태 업데이트 (임시 저장은 TEMPORARY_UPLOAD 유지)
-        updateFileStatuses(recipeId, usedFileUrls, FileStatus.TEMPORARY_UPLOAD, recipe)
+        recipeFileService.updateFileStatuses(recipeId, usedFileUrls, FileStatus.TEMPORARY_UPLOAD, recipe)
 
         // 레시피 기본 필드 업데이트
         recipe.apply {
@@ -129,7 +129,7 @@ class RecipeService(
         dto.cookingOrders.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
         // 파일 상태 업데이트 (최종 저장은 FINALIZED 처리)
-        updateFileStatuses(recipeId, usedFileUrls, FileStatus.FINALIZED, recipe)
+        recipeFileService.updateFileStatuses(recipeId, usedFileUrls, FileStatus.FINALIZED, recipe)
 
         // 레시피 엔티티 업데이트
         recipe.apply {
@@ -187,36 +187,6 @@ class RecipeService(
         }
     }
 
-    /**
-     * 공통 파일 상태 업데이트 유틸
-     * - 사용되지 않는 파일 → UNTRACKED
-     * - 사용된 파일 → 주어진 targetStatus 로 업데이트
-     */
-    private fun updateFileStatuses(
-            recipeId: String,
-            usedFileUrls: Set<String>,
-            targetStatus: FileStatus,
-            recipe: Recipe
-    ) {
-        // 기존에 연결된 파일들
-        val attachedFiles = fileRepository.findAllByRecipeId(recipeId)
-
-        // 사용 안 된 파일은 UNTRACKED 처리
-        attachedFiles.filter { it.fileUrl !in usedFileUrls }.forEach { file: FileEntity ->
-            file.status = FileStatus.UNTRACKED
-            file.recipe = null
-            fileRepository.save(file)
-        }
-
-        // 사용된 파일은 targetStatus 로 변경
-        usedFileUrls.forEach { url ->
-            fileRepository.findByFileUrl(url)?.apply {
-                this.recipe = recipe
-                this.status = targetStatus
-                fileRepository.save(this)
-            }
-        }
-    }
 
     /**
      * 레시피 단일 조회 (본인 소유 & ACTIVE만)
@@ -282,7 +252,9 @@ class RecipeService(
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
-
+        recipeFileService.deleteFileStatuses(recipeId, recipe)
         recipeRepository.delete(recipe)
     }
+
+
 }
