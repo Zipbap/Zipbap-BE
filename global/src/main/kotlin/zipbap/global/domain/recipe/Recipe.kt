@@ -93,4 +93,8 @@ class Recipe(
 
 ) : BaseEntity() {
 
+        fun addViewCount() {
+                viewCount += 1
+        }
+
 }
