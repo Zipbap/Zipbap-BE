@@ -1,5 +1,6 @@
 package zipbap.user.api.feed.dto
 
+import zipbap.user.api.recipe.dto.RecipeResponseDto
 import java.time.LocalDateTime
 
 /**
@@ -25,7 +26,8 @@ object FeedResponseDto {
         val isBookmarked: Boolean,
         val likeCount: Long,
         val bookmarkCount: Long,
-        val commentCount: Long
+        val commentCount: Long,
+            val viewCount: Long
     )
 
     data class FeedDetailResponseDto(
@@ -56,6 +58,8 @@ object FeedResponseDto {
         val isLiked: Boolean,
         val bookmarkCount: Long,
         val isBookmarked: Boolean,
-        val commentCount: Long
+        val commentCount: Long,
+        val viewCount: Long,
+            val cookingOrders: List<RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse>
     )
 }

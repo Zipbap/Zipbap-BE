@@ -1,7 +1,9 @@
 package zipbap.user.api.feed.converter
 
+import zipbap.global.domain.cookingorder.CookingOrder
 import zipbap.user.api.feed.dto.FeedResponseDto
 import zipbap.global.domain.feed.FeedQueryResult
+import zipbap.user.api.recipe.dto.RecipeResponseDto
 
 /**
  * FeedConverter
@@ -27,10 +29,14 @@ object FeedConverter {
             isBookmarked = row.isBookmarked,
             likeCount = row.likeCount,
             bookmarkCount = row.bookmarkCount,
-            commentCount = row.commentCount
+            commentCount = row.commentCount,
+                viewCount = row.viewCount
         )
 
-    fun toFeedDetailDto(row: FeedQueryResult.FeedDetailRow): FeedResponseDto.FeedDetailResponseDto =
+    fun toFeedDetailDto(
+            row: FeedQueryResult.FeedDetailRow,
+            orders: List<CookingOrder>
+    ): FeedResponseDto.FeedDetailResponseDto =
         FeedResponseDto.FeedDetailResponseDto(
             nickname = row.nickname ?: "",
             profileImage = row.profileImage,
@@ -59,6 +65,14 @@ object FeedConverter {
             isLiked = row.isLiked,
             bookmarkCount = row.bookmarkCount,
             isBookmarked = row.isBookmarked,
-            commentCount = row.commentCount
+            commentCount = row.commentCount,
+                viewCount = row.viewCount,
+                cookingOrders = orders.sortedBy { it.turn }.map {
+                    RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse(
+                            turn = it.turn,
+                            image = it.image,
+                            description = it.description
+                    )
+                }
         )
 }
