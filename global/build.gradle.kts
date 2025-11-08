@@ -50,6 +50,9 @@ dependencyManagement {
         kapt("jakarta.annotation:jakarta.annotation-api")
         kapt("jakarta.persistence:jakarta.persistence-api")
 
+        // Swagger/OpenAPI (springdoc 2.x, Spring Boot 3.x 호환)
+        implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
+
         // 로그
         implementation("net.logstash.logback:logstash-logback-encoder:8.1")
 
