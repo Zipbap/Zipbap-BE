@@ -7,6 +7,7 @@ import zipbap.user.api.mycategory.dto.MyCategoryRequestDto
 import zipbap.user.api.mycategory.dto.MyCategoryResponseDto
 import zipbap.global.domain.category.mycategory.MyCategory
 import zipbap.global.domain.category.mycategory.MyCategoryRepository
+import zipbap.global.domain.recipe.RecipeRepository
 import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.code.status.ErrorStatus
@@ -17,7 +18,8 @@ import zipbap.global.global.util.CustomIdGenerator
 @Transactional
 class MyCategoryService(
         private val myCategoryRepository: MyCategoryRepository,
-        private val userRepository: UserRepository
+        private val userRepository: UserRepository,
+        private val recipeRepository: RecipeRepository
 ) {
 
     /**
@@ -106,6 +108,12 @@ class MyCategoryService(
             throw GeneralException(ErrorStatus.FORBIDDEN)
         }
 
+        // 사용 중인 레시피의 연결 해제
+        recipeRepository.findAllByMyCategoryId(id)
+            .forEach { it.myCategory = null }
+
+        // 카테고리 삭제
         myCategoryRepository.deleteById(id)
+
     }
 }

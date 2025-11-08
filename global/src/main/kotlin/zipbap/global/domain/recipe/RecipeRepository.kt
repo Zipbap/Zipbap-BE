@@ -14,9 +14,9 @@ interface RecipeRepository : JpaRepository<Recipe, String> {
     ): List<Recipe>
 
     fun findAllByUserIdAndRecipeStatusAndMyCategoryIdIn(
-            userId: Long,
-            recipeStatus: RecipeStatus,
-            myCategoryIds: Collection<String>
+        userId: Long,
+        recipeStatus: RecipeStatus,
+        myCategoryIds: Collection<String>
     ): List<Recipe>
 
     @Query("""
@@ -24,10 +24,15 @@ interface RecipeRepository : JpaRepository<Recipe, String> {
         AND r.recipeStatus = :recipeStatus
         AND r.isPrivate = :isPrivate
         ORDER BY r.createdAt
-    """
-    )
-    fun findAllFeed(@Param("userId") userId: Long, @Param("recipeStatus") recipeStatus: RecipeStatus,
-                    @Param("isPrivate") isPrivate: Boolean): List<Recipe>
+    """)
+    fun findAllFeed(
+        @Param("userId") userId: Long,
+        @Param("recipeStatus") recipeStatus: RecipeStatus,
+        @Param("isPrivate") isPrivate: Boolean
+    ): List<Recipe>
 
     fun findTopByUser_IdOrderByIdDesc(userId: Long): Recipe?
+
+    // ✅ 여기만 남기면 됨
+    fun findAllByMyCategoryId(myCategoryId: String): List<Recipe>
 }
