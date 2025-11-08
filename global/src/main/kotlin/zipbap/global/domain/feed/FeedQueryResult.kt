@@ -59,6 +59,7 @@ object FeedQueryResult {
         val commentCount: Long = 0,
         var isLiked: Boolean = false,
         var isBookmarked: Boolean = false,
-        var viewCount: Long = 0
+        var viewCount: Long = 0,
+        var isOwner: Boolean = false
     )
 }

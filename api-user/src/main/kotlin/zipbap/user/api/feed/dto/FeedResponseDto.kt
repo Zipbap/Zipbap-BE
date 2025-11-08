@@ -62,7 +62,8 @@ object FeedResponseDto {
         val viewCount: Long,
         val followerCount: Long,
         val myCategory: String?,
-        val cookingOrders: List<RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse>
+        val cookingOrders: List<RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse>,
+        val isOwner: Boolean
     )
 
 }

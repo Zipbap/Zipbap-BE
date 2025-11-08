@@ -60,8 +60,10 @@ class FeedService(
         recipeRepository.findById(recipeId).get().addViewCount()
         val orders = cookingOrderRepository.findAllByRecipeId(recipeId)
 
-        row.isLiked = false // TODO: 실제 구현 필요
+        row.isLiked = false
         row.isBookmarked = false
+
+        row.isOwner = (loginUser?.id == recipeRepository.findById(recipeId).get().user.id)
 
         return FeedConverter.toFeedDetailDto(row, orders)
     }

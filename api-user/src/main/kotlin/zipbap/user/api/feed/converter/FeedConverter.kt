@@ -75,6 +75,7 @@ object FeedConverter {
                     image = it.image,
                     description = it.description
                 )
-            }
+            },
+            isOwner = row.isOwner
         )
 }

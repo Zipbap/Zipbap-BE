@@ -67,9 +67,8 @@ class FeedQueryRepositoryImpl(
         val priority = priorityExpr(keyword)
 
         val orderSpecifiers = mutableListOf<OrderSpecifier<*>>()
-        if (priority != null) {
-            orderSpecifiers += priority.desc()
-        }
+        if (priority != null) orderSpecifiers += priority.desc()
+
         when (filter) {
             FeedFilterType.HOT -> orderSpecifiers += arrayOf(like.id.countDistinct().desc(), recipe.createdAt.desc())
             FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.id.countDistinct().desc(), recipe.createdAt.desc())
@@ -93,8 +92,8 @@ class FeedQueryRepositoryImpl(
                     like.id.countDistinct(),
                     bookmark.id.countDistinct(),
                     comment.id.countDistinct(),
-                    Expressions.FALSE,  // isLiked (Service 레벨에서 채워질 예정)
-                    Expressions.FALSE,  // isBookmarked
+                    Expressions.FALSE,
+                    Expressions.FALSE,
                     recipe.isPrivate,
                     recipe.viewCount
                 )
@@ -162,9 +161,7 @@ class FeedQueryRepositoryImpl(
                     recipe.cookingTime.cookingTime,
                     recipe.level.level,
                     recipe.myCategory.name,
-
                     followerCountExpr,
-
                     recipe.createdAt,
                     recipe.updatedAt,
                     like.id.countDistinct(),
@@ -172,11 +169,13 @@ class FeedQueryRepositoryImpl(
                     comment.id.countDistinct(),
                     Expressions.FALSE,
                     Expressions.FALSE,
-                    recipe.viewCount
+                    recipe.viewCount,
+                    Expressions.FALSE
                 )
             )
             .from(recipe)
             .join(recipe.user, author)
+            .leftJoin(recipe.myCategory)
             .leftJoin(like).on(like.recipe.eq(recipe))
             .leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
             .leftJoin(comment).on(comment.recipe.eq(recipe))
@@ -190,7 +189,6 @@ class FeedQueryRepositoryImpl(
             .groupBy(recipe.id, author.id)
             .fetchOne()
     }
-
 
     private fun activeRecipe(): BooleanExpression =
         recipe.recipeStatus.eq(RecipeStatus.ACTIVE)
@@ -211,8 +209,8 @@ class FeedQueryRepositoryImpl(
 
     private fun todayCondition(): BooleanExpression {
         val today = LocalDate.now(KST)
-        val start: LocalDateTime = today.atStartOfDay()
-        val end: LocalDateTime = today.atTime(LocalTime.MAX)
+        val start = today.atStartOfDay()
+        val end = today.atTime(LocalTime.MAX)
         return recipe.createdAt.between(start, end)
     }
 
@@ -222,21 +220,19 @@ class FeedQueryRepositoryImpl(
             .where(follow.follower.eq(loginUser).and(follow.following.eq(author)))
             .exists()
 
-    private fun searchCondition(keyword: String?): BooleanExpression? {
-        if (keyword.isNullOrBlank()) return null
-        val q = keyword.trim()
-        return recipe.title.containsIgnoreCase(q)
-            .or(recipe.subtitle.containsIgnoreCase(q))
-            .or(recipe.ingredientInfo.containsIgnoreCase(q))
-    }
+    private fun searchCondition(keyword: String?): BooleanExpression? =
+        keyword?.trim()?.takeIf { it.isNotBlank() }?.let { q ->
+            recipe.title.containsIgnoreCase(q)
+                .or(recipe.subtitle.containsIgnoreCase(q))
+                .or(recipe.ingredientInfo.containsIgnoreCase(q))
+        }
 
-    private fun priorityExpr(keyword: String?): NumberExpression<Int>? {
-        if (keyword.isNullOrBlank()) return null
-        val q = keyword.trim()
-        return CaseBuilder()
-            .`when`(recipe.title.containsIgnoreCase(q)).then(3)
-            .`when`(recipe.subtitle.containsIgnoreCase(q)).then(2)
-            .`when`(recipe.ingredientInfo.containsIgnoreCase(q)).then(1)
-            .otherwise(0)
-    }
+    private fun priorityExpr(keyword: String?): NumberExpression<Int>? =
+        keyword?.trim()?.takeIf { it.isNotBlank() }?.let { q ->
+            CaseBuilder()
+                .`when`(recipe.title.containsIgnoreCase(q)).then(3)
+                .`when`(recipe.subtitle.containsIgnoreCase(q)).then(2)
+                .`when`(recipe.ingredientInfo.containsIgnoreCase(q)).then(1)
+                .otherwise(0)
+        }
 }
