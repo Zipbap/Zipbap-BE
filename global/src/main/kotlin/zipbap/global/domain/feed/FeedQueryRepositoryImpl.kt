@@ -1,7 +1,6 @@
 package zipbap.global.domain.feed
 
 import com.querydsl.core.types.OrderSpecifier
-import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.Expressions
@@ -13,9 +12,10 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 import zipbap.global.domain.bookmark.QBookmark
 import zipbap.global.domain.comment.QComment
-import zipbap.global.domain.comment.QComment.*
 import zipbap.global.domain.feed.FeedQueryResult.FeedDetailRow
 import zipbap.global.domain.feed.FeedQueryResult.FeedListRow
+import zipbap.global.domain.feed.QFeedQueryResult_FeedDetailRow as QFeedDetailRow
+import zipbap.global.domain.feed.QFeedQueryResult_FeedListRow as QFeedListRow
 import zipbap.global.domain.follow.QFollow
 import zipbap.global.domain.like.QRecipeLike
 import zipbap.global.domain.recipe.QRecipe
@@ -27,11 +27,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
-/**
- * FeedQueryRepositoryImpl
- *
- * - QueryDSL을 통한 피드 목록/상세 조회 구현체
- */
 @Repository
 class FeedQueryRepositoryImpl(
     private val queryFactory: JPAQueryFactory
@@ -47,10 +42,10 @@ class FeedQueryRepositoryImpl(
     private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 
     override fun findFeed(
-            loginUser: User?,
-            filter: FeedFilterType,
-            pageable: Pageable,
-            keyword: String?
+        loginUser: User?,
+        filter: FeedFilterType,
+        pageable: Pageable,
+        keyword: String?
     ): Page<FeedListRow> {
         val baseVisibility = activeRecipe()
             .and(recipe.isPrivate.isFalse)
@@ -81,26 +76,27 @@ class FeedQueryRepositoryImpl(
             else -> orderSpecifiers += arrayOf(recipe.createdAt.desc())
         }
 
-        val query = queryFactory
+        val content = queryFactory
             .select(
-                Projections.fields(
-                    FeedListRow::class.java,
-                    author.nickname.`as`("nickname"),
-                    author.profileImage.`as`("profileImage"),
-                    author.isPrivate.`as`("userIsPrivate"),
-                    recipe.id.`as`("recipeId"),
-                    recipe.title.`as`("title"),
-                    recipe.thumbnail.`as`("thumbnail"),
-                    recipe.introduction.`as`("introduction"),
-                    recipe.cookingTime.cookingTime.`as`("cookingTime"),
-                    recipe.level.level.`as`("level"),
-                    recipe.createdAt.`as`("createdAt"),
-                    recipe.updatedAt.`as`("updatedAt"),
-                        recipe.viewCount.`as`("viewCount"),
-                        recipe.isPrivate.`as`("isPrivate"),
-                    like.id.countDistinct().`as`("likeCount"),
-                    bookmark.id.countDistinct().`as`("bookmarkCount"),
-                    comment.id.countDistinct().`as`("commentCount")
+                QFeedListRow(
+                    author.nickname,
+                    author.profileImage,
+                    author.isPrivate,
+                    recipe.id,
+                    recipe.title,
+                    recipe.thumbnail,
+                    recipe.introduction,
+                    recipe.cookingTime.cookingTime,
+                    recipe.level.level,
+                    recipe.createdAt,
+                    recipe.updatedAt,
+                    like.id.countDistinct(),
+                    bookmark.id.countDistinct(),
+                    comment.id.countDistinct(),
+                    Expressions.FALSE,  // isLiked (Service 레벨에서 채워질 예정)
+                    Expressions.FALSE,  // isBookmarked
+                    recipe.isPrivate,
+                    recipe.viewCount
                 )
             )
             .from(recipe)
@@ -113,8 +109,7 @@ class FeedQueryRepositoryImpl(
             .orderBy(*orderSpecifiers.toTypedArray())
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
-
-        val content = query.fetch()
+            .fetch()
 
         val total = queryFactory
             .select(recipe.count())
@@ -127,8 +122,8 @@ class FeedQueryRepositoryImpl(
     }
 
     override fun findFeedDetail(
-            loginUser: User?,
-            recipeId: String
+        loginUser: User?,
+        recipeId: String
     ): FeedDetailRow? {
         val isFollowingExpr = if (loginUser != null) {
             queryFactory.selectOne().from(follow)
@@ -138,36 +133,37 @@ class FeedQueryRepositoryImpl(
 
         return queryFactory
             .select(
-                Projections.fields(
-                    FeedDetailRow::class.java,
-                    author.nickname.`as`("nickname"),
-                    author.profileImage.`as`("profileImage"),
-                    author.statusMessage.`as`("statusMessage"),
-                    isFollowingExpr.`as`("isFollowing"),
-                    recipe.id.`as`("recipeId"),
-                    recipe.title.`as`("title"),
-                    recipe.subtitle.`as`("subtitle"),
-                    recipe.introduction.`as`("introduction"),
-                    recipe.thumbnail.`as`("thumbnail"),
-                    recipe.video.`as`("video"),
-                    recipe.ingredientInfo.`as`("ingredientInfo"),
-                    recipe.kick.`as`("kick"),
-                    recipe.isPrivate.`as`("recipeIsPrivate"),
-                    recipe.recipeStatus.stringValue().`as`("recipeStatus"),
-                    recipe.cookingType.type.`as`("cookingType"),
-                    recipe.situation.situation.`as`("situation"),
-                    recipe.mainIngredient.ingredient.`as`("mainIngredient"),
-                    recipe.method.method.`as`("method"),
-                    recipe.headcount.headcount.`as`("headcount"),
-                    recipe.cookingTime.cookingTime.`as`("cookingTime"),
-                    recipe.level.level.`as`("level"),
-                        recipe.myCategory.name.`as`("myCategory"),
-                        recipe.viewCount.`as`("viewCount"),
-                    recipe.createdAt.`as`("createdAt"),
-                    recipe.updatedAt.`as`("updatedAt"),
-                    like.id.countDistinct().`as`("likeCount"),
-                    bookmark.id.countDistinct().`as`("bookmarkCount"),
-                    comment.id.countDistinct().`as`("commentCount")
+                QFeedDetailRow(
+                    author.nickname,
+                    author.profileImage,
+                    author.statusMessage,
+                    isFollowingExpr,
+                    recipe.id,
+                    recipe.title,
+                    recipe.subtitle,
+                    recipe.introduction,
+                    recipe.thumbnail,
+                    recipe.video,
+                    recipe.ingredientInfo,
+                    recipe.kick,
+                    recipe.isPrivate,
+                    recipe.recipeStatus.stringValue(),
+                    recipe.cookingType.type,
+                    recipe.situation.situation,
+                    recipe.mainIngredient.ingredient,
+                    recipe.method.method,
+                    recipe.headcount.headcount,
+                    recipe.cookingTime.cookingTime,
+                    recipe.level.level,
+                    recipe.myCategory.name,
+                    recipe.createdAt,
+                    recipe.updatedAt,
+                    like.id.countDistinct(),
+                    bookmark.id.countDistinct(),
+                    comment.id.countDistinct(),
+                    Expressions.FALSE,   // isLiked
+                    Expressions.FALSE,   // isBookmarked
+                    recipe.viewCount
                 )
             )
             .from(recipe)
@@ -208,32 +204,27 @@ class FeedQueryRepositoryImpl(
         return recipe.createdAt.between(start, end)
     }
 
-    private fun followingOnly(loginUser: User?): BooleanExpression {
-        if (loginUser == null) return Expressions.FALSE
-        return queryFactory.selectOne().from(follow)
+    private fun followingOnly(loginUser: User?): BooleanExpression =
+        if (loginUser == null) Expressions.FALSE
+        else queryFactory.selectOne().from(follow)
             .where(follow.follower.eq(loginUser).and(follow.following.eq(author)))
             .exists()
-    }
 
     private fun searchCondition(keyword: String?): BooleanExpression? {
         if (keyword.isNullOrBlank()) return null
         val q = keyword.trim()
-
-        val titleMatch = recipe.title.containsIgnoreCase(q)
-        val subtitleMatch = recipe.subtitle.containsIgnoreCase(q)
-        val ingredientMatch = recipe.ingredientInfo.containsIgnoreCase(q)
-
-        return titleMatch.or(subtitleMatch).or(ingredientMatch)
+        return recipe.title.containsIgnoreCase(q)
+            .or(recipe.subtitle.containsIgnoreCase(q))
+            .or(recipe.ingredientInfo.containsIgnoreCase(q))
     }
 
     private fun priorityExpr(keyword: String?): NumberExpression<Int>? {
         if (keyword.isNullOrBlank()) return null
         val q = keyword.trim()
-
         return CaseBuilder()
-                .`when`(recipe.title.containsIgnoreCase(q)).then(3)
-                .`when`(recipe.subtitle.containsIgnoreCase(q)).then(2)
-                .`when`(recipe.ingredientInfo.containsIgnoreCase(q)).then(1)
-                .otherwise(0)
+            .`when`(recipe.title.containsIgnoreCase(q)).then(3)
+            .`when`(recipe.subtitle.containsIgnoreCase(q)).then(2)
+            .`when`(recipe.ingredientInfo.containsIgnoreCase(q)).then(1)
+            .otherwise(0)
     }
 }

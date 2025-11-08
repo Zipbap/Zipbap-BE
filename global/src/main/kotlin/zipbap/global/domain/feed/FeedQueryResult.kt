@@ -1,18 +1,11 @@
 package zipbap.global.domain.feed
 
+import com.querydsl.core.annotations.QueryProjection
 import java.time.LocalDateTime
 
-/**
- * FeedQueryResult
- *
- * - QueryDSL 결과 매핑 전용 DTO 모음
- */
 object FeedQueryResult {
 
-    /**
-     * 피드 목록 조회 결과 DTO
-     */
-    data class FeedListRow(
+    data class FeedListRow @QueryProjection constructor(
         val nickname: String? = null,
         val profileImage: String? = null,
         val userIsPrivate: Boolean = false,
@@ -29,14 +22,11 @@ object FeedQueryResult {
         val commentCount: Long = 0,
         var isLiked: Boolean = false,
         var isBookmarked: Boolean = false,
-            var isPrivate: Boolean = false,
-            var viewCount: Long = 0
+        var isPrivate: Boolean = false,
+        var viewCount: Long = 0
     )
 
-    /**
-     * 피드 상세 조회 결과 DTO
-     */
-    data class FeedDetailRow(
+    data class FeedDetailRow @QueryProjection constructor(
         val nickname: String? = null,
         val profileImage: String? = null,
         val statusMessage: String? = null,
@@ -66,6 +56,6 @@ object FeedQueryResult {
         val commentCount: Long = 0,
         var isLiked: Boolean = false,
         var isBookmarked: Boolean = false,
-            var viewCount: Long
+        var viewCount: Long = 0
     )
 }
