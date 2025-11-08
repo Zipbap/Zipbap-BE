@@ -34,8 +34,8 @@ object FeedConverter {
         )
 
     fun toFeedDetailDto(
-            row: FeedQueryResult.FeedDetailRow,
-            orders: List<CookingOrder>
+        row: FeedQueryResult.FeedDetailRow,
+        orders: List<CookingOrder>
     ): FeedResponseDto.FeedDetailResponseDto =
         FeedResponseDto.FeedDetailResponseDto(
             nickname = row.nickname ?: "",
@@ -66,13 +66,15 @@ object FeedConverter {
             bookmarkCount = row.bookmarkCount,
             isBookmarked = row.isBookmarked,
             commentCount = row.commentCount,
-                viewCount = row.viewCount,
-                cookingOrders = orders.sortedBy { it.turn }.map {
-                    RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse(
-                            turn = it.turn,
-                            image = it.image,
-                            description = it.description
-                    )
-                }
+            viewCount = row.viewCount,
+            followerCount = row.followerCount,
+            myCategory = row.myCategory,
+            cookingOrders = orders.sortedBy { it.turn }.map {
+                RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse(
+                    turn = it.turn,
+                    image = it.image,
+                    description = it.description
+                )
+            }
         )
 }

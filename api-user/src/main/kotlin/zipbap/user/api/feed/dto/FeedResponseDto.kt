@@ -60,6 +60,9 @@ object FeedResponseDto {
         val isBookmarked: Boolean,
         val commentCount: Long,
         val viewCount: Long,
-            val cookingOrders: List<RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse>
+        val followerCount: Long,
+        val myCategory: String?,
+        val cookingOrders: List<RecipeResponseDto.RecipeDetailResponseDto.CookingOrderResponse>
     )
+
 }

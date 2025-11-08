@@ -49,6 +49,9 @@ object FeedQueryResult {
         val cookingTime: String? = null,
         val level: String? = null,
         val myCategory: String? = null,
+
+        val followerCount: Long = 0,
+
         val createdAt: LocalDateTime? = null,
         val updatedAt: LocalDateTime? = null,
         val likeCount: Long = 0,

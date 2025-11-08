@@ -125,11 +125,17 @@ class FeedQueryRepositoryImpl(
         loginUser: User?,
         recipeId: String
     ): FeedDetailRow? {
+
         val isFollowingExpr = if (loginUser != null) {
             queryFactory.selectOne().from(follow)
                 .where(follow.follower.eq(loginUser).and(follow.following.eq(author)))
                 .exists()
         } else Expressions.FALSE
+
+        val followerCountExpr = queryFactory
+            .select(follow.id.countDistinct())
+            .from(follow)
+            .where(follow.following.eq(author))
 
         return queryFactory
             .select(
@@ -156,13 +162,16 @@ class FeedQueryRepositoryImpl(
                     recipe.cookingTime.cookingTime,
                     recipe.level.level,
                     recipe.myCategory.name,
+
+                    followerCountExpr,
+
                     recipe.createdAt,
                     recipe.updatedAt,
                     like.id.countDistinct(),
                     bookmark.id.countDistinct(),
                     comment.id.countDistinct(),
-                    Expressions.FALSE,   // isLiked
-                    Expressions.FALSE,   // isBookmarked
+                    Expressions.FALSE,
+                    Expressions.FALSE,
                     recipe.viewCount
                 )
             )
@@ -174,11 +183,14 @@ class FeedQueryRepositoryImpl(
             .where(
                 recipe.id.eq(recipeId)
                     .and(activeRecipe())
-                    .and(recipe.isPrivate.isFalse.or(loginUserOwns(loginUser)).or(authorVisibility(loginUser)))
+                    .and(recipe.isPrivate.isFalse
+                        .or(loginUserOwns(loginUser))
+                        .or(authorVisibility(loginUser)))
             )
             .groupBy(recipe.id, author.id)
             .fetchOne()
     }
+
 
     private fun activeRecipe(): BooleanExpression =
         recipe.recipeStatus.eq(RecipeStatus.ACTIVE)
