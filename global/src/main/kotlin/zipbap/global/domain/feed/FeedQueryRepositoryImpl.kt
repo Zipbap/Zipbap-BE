@@ -96,6 +96,8 @@ class FeedQueryRepositoryImpl(
                     recipe.level.level.`as`("level"),
                     recipe.createdAt.`as`("createdAt"),
                     recipe.updatedAt.`as`("updatedAt"),
+                        recipe.viewCount.`as`("viewCount"),
+                        recipe.isPrivate.`as`("isPrivate"),
                     like.id.countDistinct().`as`("likeCount"),
                     bookmark.id.countDistinct().`as`("bookmarkCount"),
                     comment.id.countDistinct().`as`("commentCount")
@@ -159,6 +161,8 @@ class FeedQueryRepositoryImpl(
                     recipe.headcount.headcount.`as`("headcount"),
                     recipe.cookingTime.cookingTime.`as`("cookingTime"),
                     recipe.level.level.`as`("level"),
+                        recipe.myCategory.name.`as`("myCategory"),
+                        recipe.viewCount.`as`("viewCount"),
                     recipe.createdAt.`as`("createdAt"),
                     recipe.updatedAt.`as`("updatedAt"),
                     like.id.countDistinct().`as`("likeCount"),

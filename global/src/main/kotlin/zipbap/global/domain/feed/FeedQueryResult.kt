@@ -28,7 +28,9 @@ object FeedQueryResult {
         val bookmarkCount: Long = 0,
         val commentCount: Long = 0,
         var isLiked: Boolean = false,
-        var isBookmarked: Boolean = false
+        var isBookmarked: Boolean = false,
+            var isPrivate: Boolean = false,
+            var viewCount: Long = 0
     )
 
     /**
@@ -56,12 +58,14 @@ object FeedQueryResult {
         val headcount: String? = null,
         val cookingTime: String? = null,
         val level: String? = null,
+        val myCategory: String? = null,
         val createdAt: LocalDateTime? = null,
         val updatedAt: LocalDateTime? = null,
         val likeCount: Long = 0,
         val bookmarkCount: Long = 0,
         val commentCount: Long = 0,
         var isLiked: Boolean = false,
-        var isBookmarked: Boolean = false
+        var isBookmarked: Boolean = false,
+            var viewCount: Long
     )
 }
