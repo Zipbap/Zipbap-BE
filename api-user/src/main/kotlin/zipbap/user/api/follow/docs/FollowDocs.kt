@@ -157,7 +157,7 @@ userId의 팔로잉 목록을 조회합니다.
                                     mediaType = "application/json",
                                     array = ArraySchema(
                                             schema = Schema(
-                                                    implementation = FollowResponseDto.FollowCountDto::class)
+                                                    implementation = FollowResponseDto.FollowUserDto::class)
                                     )
                             )
                         ]
@@ -200,7 +200,7 @@ userId의 팔로워 목록을 조회합니다.
                                     mediaType = "application/json",
                                     array = ArraySchema(
                                             schema = Schema(
-                                                    implementation = FollowResponseDto.FollowCountDto::class)
+                                                    implementation = FollowResponseDto.FollowUserDto::class)
                                     )
                             )
                         ]
