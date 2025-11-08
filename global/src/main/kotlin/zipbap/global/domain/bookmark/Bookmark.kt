@@ -1,6 +1,8 @@
 package zipbap.global.domain.bookmark
 
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import zipbap.global.domain.base.BaseEntity
 import zipbap.global.domain.recipe.Recipe
 import zipbap.global.domain.user.User
@@ -16,6 +18,7 @@ class Bookmark(
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "user_id", nullable = false)
+        @OnDelete(action = OnDeleteAction.CASCADE)
         val user: User,
 
         @ManyToOne(fetch = FetchType.LAZY)

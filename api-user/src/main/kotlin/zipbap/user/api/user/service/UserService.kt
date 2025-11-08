@@ -15,8 +15,8 @@ import zipbap.global.domain.user.UserRepository
 @Service
 @Transactional(readOnly = true)
 class UserService(
-        private val userRepository: UserRepository,
-        private val fileRepository: FileRepository
+    private val userRepository: UserRepository,
+    private val fileRepository: FileRepository
 ) {
 
     fun isUserExists(email: String): Boolean {
@@ -29,9 +29,9 @@ class UserService(
 
         val Social = SocialType.valueOf(registrationId.uppercase())
         val user = User(
-                email = email,
-                nickname = username,
-                socialType = Social
+            email = email,
+            nickname = username,
+            socialType = Social
         )
 
         userRepository.save(user)
@@ -42,58 +42,78 @@ class UserService(
     }
 
     @Transactional
-    fun updateUserProfile(user: User, dto: UserRequestDto.UserUpdateDto
+    fun updateUserProfile(
+        user: User,
+        dto: UserRequestDto.UserUpdateDto
     ): UserResponseDto.UserProfileDto {
+
+        // ✅ 반드시 영속 상태 User 로 다시 조회
+        val managedUser = userRepository.findById(user.id!!)
+            .orElseThrow { IllegalArgumentException("User not found") }
 
         // 요청에서 사용된 파일 URL 수집
         val usedFileUrls = mutableSetOf<String>()
+        dto.profileImage?.let { usedFileUrls.add(it) }
 
-        dto.profileImage?.let {
-            usedFileUrls.add(it)
-        }
-        // 파일 상태 업데이트 (최종 저장은 FINALIZED 처리)
-        updateFileStatuses(usedFileUrls, FileStatus.FINALIZED, user)
+        // ✅ 파일 상태 업데이트는 영속 상태 유저로 처리
+        updateFileStatuses(usedFileUrls, FileStatus.FINALIZED, managedUser)
 
-        user.update(
-                nickname = dto.nickname,
-                isPrivate = dto.isPrivate,
-                profileImage = dto.profileImage,
-                statusMessage = dto.statusMessage
+        managedUser.update(
+            nickname = dto.nickname,
+            isPrivate = dto.isPrivate,
+            profileImage = dto.profileImage,
+            statusMessage = dto.statusMessage
         )
 
-        userRepository.save(user)
-
-        return UserConverter.toProfileDto(user)
+        return UserConverter.toProfileDto(managedUser)
     }
 
 
     /**
-     * 공통 파일 상태 업데이트 유틸
-     * - 사용되지 않는 파일 → UNTRACKED
-     * - 사용된 파일 → 주어진 targetStatus 로 업데이트
+     * 공통 파일 상태 업데이트
+     * - 사용 안 된 파일 → UNTRACKED + user = null
+     * - 사용된 파일 → targetStatus + user = managedUser
      */
     private fun updateFileStatuses(
-            usedFileUrls: Set<String>,
-            targetStatus: FileStatus,
-            user: User
+        usedFileUrls: Set<String>,
+        targetStatus: FileStatus,
+        managedUser: User
     ) {
-        // 기존에 연결된 파일들
-        val attachedFiles = fileRepository.findAllByUser(user)
+        val attachedFiles = fileRepository.findAllByUser(managedUser)
 
-        // 사용 안 된 파일은 UNTRACKED 처리
-        attachedFiles.filter { it.fileUrl !in usedFileUrls }.forEach { file: FileEntity ->
+        // 사용 안된 파일 정리
+        attachedFiles.filter { it.fileUrl !in usedFileUrls }.forEach { file ->
             file.status = FileStatus.UNTRACKED
             file.user = null
-            fileRepository.save(file)
         }
 
-        // 사용된 파일은 targetStatus 로 변경
+        // 사용된 파일 상태 처리
         usedFileUrls.forEach { url ->
             fileRepository.findByFileUrl(url)?.apply {
-                this.user = user
+                this.user = managedUser   // ✅ Detached user 대신 managedUser 사용
                 this.status = targetStatus
-                fileRepository.save(this)
             }
         }
     }
+
+
+    @Transactional
+    fun deleteUser(user: User) {
+
+        /**
+         * ✅ 삭제 시에도 항상 영속 엔티티 사용해야 함
+         */
+        val managedUser = userRepository.findById(user.id!!)
+            .orElseThrow { IllegalArgumentException("User not found") }
+
+        // 소셜 타입별 후처리 (카카오 unlink / 애플 revoke 등 가능)
+        when (managedUser.socialType) {
+            SocialType.KAKAO -> { /* TODO: 카카오 unlink 예정 */ }
+            SocialType.APPLE -> { /* TODO: 애플 revoke 예정 */ }
+        }
+
+        // ✅ CascadeType.REMOVE + orphanRemoval에 의해 연관 객체 자동 삭제
+        userRepository.delete(managedUser)
+    }
+
 }

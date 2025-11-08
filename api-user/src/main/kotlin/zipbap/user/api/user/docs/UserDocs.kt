@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -95,5 +96,42 @@ interface UserDocs {
             @UserInjection user: User,
             @RequestBody dto: UserRequestDto.UserUpdateDto
     ): ApiResponse<UserResponseDto.UserProfileDto>
+
+
+
+
+    @Operation(
+        summary = "회원 탈퇴",
+        description = """
+유저 본인의 계정을 삭제합니다.
+
+📌 주의사항  
+- 유저와 관련된 모든 데이터는 즉시 삭제됩니다.
+"""
+    )
+    @ApiResponses(
+        value = [
+            io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "탈퇴 완료",
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(implementation = ApiResponse::class)
+                    )
+                ]
+            ),
+            io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "로그인 필요",
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
+            )
+        ]
+    )
+    @DeleteMapping
+    fun deleteUser(
+        @UserInjection user: User
+    ): ApiResponse<String>
+
 
 }

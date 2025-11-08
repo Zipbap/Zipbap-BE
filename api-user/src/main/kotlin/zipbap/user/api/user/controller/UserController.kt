@@ -25,4 +25,9 @@ class UserController(
         return ApiResponse.onSuccess(userService.updateUserProfile(user, dto))
     }
 
+    override fun deleteUser(user: User): ApiResponse<String> {
+        userService.deleteUser(user)
+        return ApiResponse.onSuccess("Delete Success!")
+    }
+
 }

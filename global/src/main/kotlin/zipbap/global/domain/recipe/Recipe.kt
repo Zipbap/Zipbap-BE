@@ -1,6 +1,8 @@
 package zipbap.global.domain.recipe
 
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import zipbap.global.domain.base.BaseEntity
 import zipbap.global.domain.category.cookingtime.CookingTime
 import zipbap.global.domain.category.cookingtype.CookingType
@@ -19,6 +21,7 @@ class Recipe(
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "user_id", nullable = false)
+        @OnDelete(action = OnDeleteAction.CASCADE)
         val user: User,
 
         @Column(length = 200, nullable = true)

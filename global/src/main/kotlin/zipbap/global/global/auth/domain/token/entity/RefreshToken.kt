@@ -7,16 +7,17 @@ import zipbap.global.domain.user.User
 @Entity
 class RefreshToken(
 
-        @OneToOne
-        @JoinColumn(name = "user_id", nullable = false)
-        val user: User,
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    val user: User,
 
-        @Column(nullable = false)
-        var refreshToken: String,
+    @Column(nullable = false)
+    var refreshToken: String,
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long? = null
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null
+
 ) : BaseEntity() {
 
     fun updateToken(refreshToken: String) {
@@ -24,8 +25,8 @@ class RefreshToken(
     }
 
     companion object {
-        fun createRefreshToken(user: User, refreshToken: String): RefreshToken {
-            return RefreshToken(user, refreshToken)
-        }
+        fun createRefreshToken(user: User, refreshToken: String): RefreshToken =
+            RefreshToken(user, refreshToken)
     }
 }
+

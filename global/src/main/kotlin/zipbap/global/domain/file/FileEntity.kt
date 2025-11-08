@@ -1,6 +1,8 @@
 package zipbap.global.domain.file
 
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import zipbap.global.domain.base.BaseEntity
 import zipbap.global.domain.recipe.Recipe
 import zipbap.global.domain.user.User
@@ -22,6 +24,7 @@ class FileEntity(
 
         @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+        @OnDelete(action = OnDeleteAction.CASCADE)
     var user: User? = null,
 
         @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
