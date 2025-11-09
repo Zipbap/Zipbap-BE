@@ -51,7 +51,8 @@ class MyPageQueryRepository(
                                 u.id, u.nickname, u.profileImage,
                                 followersCount, followingsCount,
                                 isFollowingExpr,
-                                u.statusMessage
+                                u.statusMessage,
+                                u.isPrivate
                         )
                 )
                 .from(u)

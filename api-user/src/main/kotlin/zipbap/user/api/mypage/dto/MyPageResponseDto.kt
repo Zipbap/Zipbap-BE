@@ -1,54 +1,73 @@
 package zipbap.user.api.mypage.dto
 
-import org.springframework.data.domain.Page
+import io.swagger.v3.oas.annotations.media.Schema
 import zipbap.global.domain.mypage.MyPageQueryResult
 import java.time.LocalDateTime
 
 object MyPageResponseDto {
 
     data class MyPageViewDto(
-            val profileBlockDto: ProfileDto,
-            val recipeCardDtoPage: Page<RecipeCardDto>,
-            val isOwner: Boolean,
-            val isFeed: Boolean
+        val profileBlockDto: ProfileDto,
+        val recipeCardPage: PageResponse<RecipeCardDto>,
+        val isOwner: Boolean,
+        val isFeed: Boolean
     )
 
     data class ProfileDto(
-            val id: Long,
-            val nickname: String,
-            val profileImage: String?,
-            val followers: Long,
-            val followings: Long,
-            val isFollowing: Boolean, // viewer -> owner
-            val statusMessage: String?
+        @Schema(description = "유저 ID", example = "4")
+        val id: Long,
+
+        @Schema(description = "닉네임", example = "sunny")
+        val nickname: String,
+
+        @Schema(description = "프로필 이미지 URL", example = "https://zipbap-bucket.s3.ap-northeast-2.amazonaws.com/profile.png")
+        val profileImage: String?,
+
+        @Schema(description = "팔로워 수", example = "124")
+        val followers: Long,
+
+        @Schema(description = "팔로잉 수", example = "38")
+        val followings: Long,
+
+        @Schema(description = "팔로우 여부", example = "false")
+        val isFollowing: Boolean,
+
+        @Schema(description = "상태 메시지", example = "오늘도 잘 부탁해!")
+        val statusMessage: String?,
+
+        @Schema(description = "계정 비공개 여부", example = "true")
+        val isPrivate: Boolean
     ) {
-        constructor(profileBlock: MyPageQueryResult.ProfileBlock)
-                : this(
-                        id = profileBlock.id,
-                        nickname = profileBlock.nickname,
-                        profileImage = profileBlock.profileImage,
-                        followers = profileBlock.followers,
-                        followings = profileBlock.followings,
-                        isFollowing = profileBlock.isFollowing,
-                        statusMessage = profileBlock.statusMessage
-                )
+        constructor(block: MyPageQueryResult.ProfileBlock) : this(
+            id = block.id,
+            nickname = block.nickname,
+            profileImage = block.profileImage,
+            followers = block.followers,
+            followings = block.followings,
+            isFollowing = block.isFollowing,
+            statusMessage = block.statusMessage,
+            isPrivate = block.isPrivate
+        )
     }
 
     data class RecipeCardDto(
-            val id: String,               // Recipe id가 String
-            val title: String?,
-            val subtitle: String?,
-            val thumbnail: String?,
-            val createdAt: LocalDateTime
+        @Schema(description = "레시피 ID", example = "RC-1-00012")
+        val id: String,
+        @Schema(description = "제목", example = "간장계란밥")
+        val title: String?,
+        @Schema(description = "설명", example = "5분 완성 집밥 레시피")
+        val subtitle: String?,
+        @Schema(description = "썸네일 URL", example = "https://zipbap-bucket.s3.ap-northeast-2.amazonaws.com/thumb.png")
+        val thumbnail: String?,
+        @Schema(description = "생성 날짜", example = "2025-01-02T12:03:11")
+        val createdAt: LocalDateTime
     ) {
-        constructor(recipeCard: MyPageQueryResult.RecipeCard)
-                : this(
-                        id = recipeCard.id,
-                        title = recipeCard.title,
-                        subtitle = recipeCard.subtitle,
-                        thumbnail = recipeCard.thumbnail,
-                        createdAt = recipeCard.createdAt
-                )
+        constructor(card: MyPageQueryResult.RecipeCard) : this(
+            id = card.id,
+            title = card.title,
+            subtitle = card.subtitle,
+            thumbnail = card.thumbnail,
+            createdAt = card.createdAt
+        )
     }
-
 }
