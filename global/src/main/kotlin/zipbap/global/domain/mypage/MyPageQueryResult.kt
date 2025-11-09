@@ -10,6 +10,7 @@ object MyPageQueryResult {
             val followers: Long,
             val followings: Long,
             val isFollowing: Boolean, // viewer -> owner
+            val statusMessage: String?
     )
 
     data class RecipeCard(

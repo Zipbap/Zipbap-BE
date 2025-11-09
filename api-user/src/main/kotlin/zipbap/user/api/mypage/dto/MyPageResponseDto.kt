@@ -20,6 +20,7 @@ object MyPageResponseDto {
             val followers: Long,
             val followings: Long,
             val isFollowing: Boolean, // viewer -> owner
+            val statusMessage: String?
     ) {
         constructor(profileBlock: MyPageQueryResult.ProfileBlock)
                 : this(
@@ -28,7 +29,8 @@ object MyPageResponseDto {
                         profileImage = profileBlock.profileImage,
                         followers = profileBlock.followers,
                         followings = profileBlock.followings,
-                        isFollowing = profileBlock.isFollowing
+                        isFollowing = profileBlock.isFollowing,
+                        statusMessage = profileBlock.statusMessage
                 )
     }
 

@@ -50,7 +50,8 @@ class MyPageQueryRepository(
                                 MyPageQueryResult.ProfileBlock::class.java,
                                 u.id, u.nickname, u.profileImage,
                                 followersCount, followingsCount,
-                                isFollowingExpr
+                                isFollowingExpr,
+                                u.statusMessage
                         )
                 )
                 .from(u)

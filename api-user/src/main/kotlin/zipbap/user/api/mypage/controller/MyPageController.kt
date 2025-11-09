@@ -1,51 +1,59 @@
 package zipbap.user.api.mypage.controller
 
 import org.springframework.data.domain.Pageable
-import org.springframework.data.web.PageableDefault
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import zipbap.global.global.auth.resolver.UserInjection
 import zipbap.user.api.mypage.dto.MyPageResponseDto
 import zipbap.user.api.mypage.service.MyPageService
 import zipbap.global.domain.user.User
 import zipbap.app.global.ApiResponse
+import zipbap.user.api.mypage.docs.MyPageDocs
 
 
 /**
- * userId 기반으로 마이페이지를 검색합니다.
- * integration -> 페이지 주인의 정보 + 북마크 + 피드
- * bookmark -> 페이지 주인의 정보 + 북마크
- * feed -> 페이지 주인의 정보 + 피드
- * 여기서 userId가 자신인지 아닌지에 따라 리턴해주는 값이 다르도록...
+ * 마이페이지 조회 컨트롤러.
+ *
+ * - `/feed` : 페이지 주인의 피드(레시피 카드 목록)를 조회
+ * - `/bookmark` : 페이지 주인의 북마크 목록을 조회 (본인만 접근 가능)
+ *
+ * Docs(`MyPageDocs`)에서 Swagger 문서 정의를 상속받아 사용한다.
  */
 @RestController
 @RequestMapping("/api/mypage")
 class MyPageController(
-        private val myPageService: MyPageService
-) {
+    private val myPageService: MyPageService
+) : MyPageDocs {
 
     /**
-     * 마이페이지 중, 피드를 검색합니다!
+     * 마이페이지 피드 조회.
+     *
+     * @param user 현재 로그인한 사용자 (UserInjection)
+     * @param userId 조회 대상 사용자 ID (페이지 주인)
+     * @param pageable 페이징 정보 (기본 size = 21)
+     * @return MyPageResponseDto.MyPageViewDto (프로필 + 피드 카드 + isOwner 플래그 포함)
      */
-    @GetMapping("/{userId}/feed")
-    fun getFeedVersion(
-            @UserInjection user: User,
-            @PathVariable userId: Long,
-            @PageableDefault(size = 21, page = 0) pageable: Pageable
-            ): ApiResponse<MyPageResponseDto.MyPageViewDto> {
+    override fun getFeedVersion(
+        user: User,
+        userId: Long,
+        pageable: Pageable
+    ): ApiResponse<MyPageResponseDto.MyPageViewDto> {
         return ApiResponse.onSuccess(myPageService.getFeedCard(user, userId, pageable))
     }
 
     /**
-     * 마이페이지 중 북마크를 검색합니다!
+     * 마이페이지 북마크 조회.
+     *
+     * 본인만 조회 가능하며, 다른 사용자가 요청할 경우 UNAUTHORIZED 발생.
+     *
+     * @param user 현재 로그인한 사용자 (UserInjection)
+     * @param userId 조회 대상 사용자 ID (페이지 주인)
+     * @param pageable 페이징 정보 (기본 size = 21)
+     * @return MyPageResponseDto.MyPageViewDto (프로필 + 북마크 카드 + isOwner = true)
      */
-    @GetMapping("/{userId}/bookmark")
-    fun getBookmarkVersion(
-            @UserInjection user: User,
-            @PathVariable userId: Long,
-            @PageableDefault(size = 21, page = 0) pageable: Pageable
+    override fun getBookmarkVersion(
+        user: User,
+        userId: Long,
+        pageable: Pageable
     ): ApiResponse<MyPageResponseDto.MyPageViewDto> {
         return ApiResponse.onSuccess(myPageService.getBookmarkCard(user, userId, pageable))
     }
