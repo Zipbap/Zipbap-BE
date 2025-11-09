@@ -11,6 +11,7 @@ import java.time.LocalDateTime
 object FeedResponseDto {
 
     data class FeedItemResponseDto(
+        val userId: Long,
         val nickname: String,
         val profileImage: String?,
         val userIsPrivate: Boolean,
@@ -31,6 +32,7 @@ object FeedResponseDto {
     )
 
     data class FeedDetailResponseDto(
+        val userId: Long,
         val nickname: String,
         val profileImage: String?,
         val statusMessage: String?,

@@ -14,6 +14,7 @@ object FeedConverter {
 
     fun toFeedItemDto(row: FeedQueryResult.FeedListRow): FeedResponseDto.FeedItemResponseDto =
         FeedResponseDto.FeedItemResponseDto(
+            userId = row.userId,
             nickname = row.nickname ?: "",
             profileImage = row.profileImage,
             userIsPrivate = row.userIsPrivate,
@@ -30,7 +31,7 @@ object FeedConverter {
             likeCount = row.likeCount,
             bookmarkCount = row.bookmarkCount,
             commentCount = row.commentCount,
-                viewCount = row.viewCount
+            viewCount = row.viewCount
         )
 
     fun toFeedDetailDto(
@@ -38,6 +39,7 @@ object FeedConverter {
         orders: List<CookingOrder>
     ): FeedResponseDto.FeedDetailResponseDto =
         FeedResponseDto.FeedDetailResponseDto(
+            userId = row.userId,
             nickname = row.nickname ?: "",
             profileImage = row.profileImage,
             statusMessage = row.statusMessage,

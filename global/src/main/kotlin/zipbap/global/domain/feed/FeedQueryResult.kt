@@ -6,6 +6,7 @@ import java.time.LocalDateTime
 object FeedQueryResult {
 
     data class FeedListRow @QueryProjection constructor(
+        val userId: Long,
         val nickname: String? = null,
         val profileImage: String? = null,
         val userIsPrivate: Boolean = false,
@@ -27,6 +28,7 @@ object FeedQueryResult {
     )
 
     data class FeedDetailRow @QueryProjection constructor(
+        val userId: Long,
         val nickname: String? = null,
         val profileImage: String? = null,
         val statusMessage: String? = null,

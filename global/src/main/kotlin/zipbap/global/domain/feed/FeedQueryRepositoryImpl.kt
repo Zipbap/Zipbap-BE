@@ -78,6 +78,7 @@ class FeedQueryRepositoryImpl(
         val content = queryFactory
             .select(
                 QFeedListRow(
+                    author.id,
                     author.nickname,
                     author.profileImage,
                     author.isPrivate,
@@ -139,6 +140,7 @@ class FeedQueryRepositoryImpl(
         return queryFactory
             .select(
                 QFeedDetailRow(
+                    author.id,
                     author.nickname,
                     author.profileImage,
                     author.statusMessage,
