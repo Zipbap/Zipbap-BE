@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
 import zipbap.global.domain.base.BaseEntity
+import zipbap.global.domain.bookmark.Bookmark
 import zipbap.global.domain.category.cookingtime.CookingTime
 import zipbap.global.domain.category.cookingtype.CookingType
 import zipbap.global.domain.category.headcount.Headcount
@@ -12,7 +13,9 @@ import zipbap.global.domain.category.mainingredient.MainIngredient
 import zipbap.global.domain.category.method.Method
 import zipbap.global.domain.category.mycategory.MyCategory
 import zipbap.global.domain.category.situation.Situation
+import zipbap.global.domain.comment.Comment
 import zipbap.global.domain.cookingorder.CookingOrder
+import zipbap.global.domain.like.RecipeLike
 import zipbap.global.domain.user.User
 
 @Entity
@@ -89,6 +92,15 @@ class Recipe(
 
         @OneToMany(mappedBy = "recipe", cascade = [CascadeType.ALL], orphanRemoval = true)
         var cookingOrders: MutableList<CookingOrder> = mutableListOf(),
+
+        @OneToMany(mappedBy = "recipe", cascade = [CascadeType.ALL], orphanRemoval = true)
+        var comments: MutableList<Comment> = mutableListOf(),
+
+        @OneToMany(mappedBy = "recipe", cascade = [CascadeType.ALL], orphanRemoval = true)
+        var likes: MutableList<RecipeLike> = mutableListOf(),
+
+        @OneToMany(mappedBy = "recipe", cascade = [CascadeType.ALL], orphanRemoval = true)
+        var bookmarks: MutableList<Bookmark> = mutableListOf(),
 
         @Id
         @Column(name = "id", length = 40)
