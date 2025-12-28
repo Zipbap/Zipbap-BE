@@ -4,10 +4,13 @@ import com.amazonaws.HttpMethod
 import com.amazonaws.services.s3.AmazonS3
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import java.net.URL
 import java.util.*
 
 @Service
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
 class PresignedUrlProvider(
     private val amazonS3: AmazonS3,
 
