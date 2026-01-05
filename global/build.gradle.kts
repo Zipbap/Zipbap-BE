@@ -45,8 +45,8 @@ dependencyManagement {
         // ⚠️ JDBC 드라이버는 애플리케이션 모듈(api-*)에 두는 걸 권장. (여기선 뺌)
 
         // Querydsl (APT는 여기서!)
-        implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
-        kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
+        implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+        kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
         kapt("jakarta.annotation:jakarta.annotation-api")
         kapt("jakarta.persistence:jakarta.persistence-api")
 

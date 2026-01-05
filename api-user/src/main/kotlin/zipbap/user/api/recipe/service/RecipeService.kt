@@ -1,5 +1,6 @@
 package zipbap.user.api.recipe.service
 
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zipbap.user.api.recipe.converter.RecipeConverter
@@ -17,6 +18,7 @@ import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.util.CustomIdGenerator
 import zipbap.global.global.exception.GeneralException
 import zipbap.global.global.code.status.ErrorStatus
+import zipbap.user.api.recipe.event.RecipeViewedEvent
 
 @Service
 class RecipeService(
@@ -24,7 +26,8 @@ class RecipeService(
         private val cookingOrderRepository: CookingOrderRepository,
         private val userRepository: UserRepository,
         private val categoryValidator: CategoryValidator,
-        private val recipeFileService: RecipeFileService
+        private val recipeFileService: RecipeFileService,
+        private val publisher: ApplicationEventPublisher
 ) {
 
     /**
@@ -206,12 +209,10 @@ class RecipeService(
             throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
         }
 
-        // 조회수 증가
-        recipe.viewCount += 1
-        val savedRecipe = recipeRepository.save(recipe)
-
         val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
-        return RecipeConverter.toDto(savedRecipe, orders)
+
+        publisher.publishEvent(RecipeViewedEvent(recipeId, userId))
+        return RecipeConverter.toDto(recipe, orders)
     }
 
     /**
