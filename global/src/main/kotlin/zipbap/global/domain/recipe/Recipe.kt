@@ -103,7 +103,7 @@ class Recipe(
         var bookmarks: MutableList<Bookmark> = mutableListOf(),
 
         @Id
-        @Column(name = "id", length = 16)
+        @Column(name = "id", length = 18)
         val id: String // RC-{userId}-{sequence}
 
 ) : BaseEntity() {
