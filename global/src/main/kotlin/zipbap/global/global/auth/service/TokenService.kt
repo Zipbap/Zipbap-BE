@@ -72,7 +72,7 @@ class TokenService(
             throw GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
-        val userDetails: UserDetails = customUserDetailsService.loadUserByUsername(user.email)
+        val userDetails: UserDetails = customUserDetailsService.loadUserByUsername(user)
 
         return UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
     }
