@@ -42,4 +42,19 @@ interface RecipeRepository : JpaRepository<Recipe, String> {
         UPDATE Recipe r SET r.viewCount = r.viewCount + 1 WHERE r.id = :recipeId
     """)
     fun updateViewCount(@Param("recipeId") recipeId: String): Unit
+
+    @Query("""
+          select r from Recipe r
+            join fetch r.user u
+            left join fetch r.myCategory mc
+            left join fetch r.cookingType ct
+            left join fetch r.situation s
+            left join fetch r.mainIngredient mi
+            left join fetch r.method m
+            left join fetch r.headcount hc
+            left join fetch r.cookingTime ctime
+            left join fetch r.level lv
+          where r.id = :recipeId
+    """)
+    fun findByIdForDetail(@Param("recipeId") recipeId: String): Recipe?
 }

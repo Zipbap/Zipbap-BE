@@ -194,13 +194,13 @@ class RecipeService(
     /**
      * 레시피 단일 조회 (본인 소유 & ACTIVE만)
      */
-    @Transactional
+    @Transactional(readOnly = true)
     fun getRecipeDetail(
         recipeId: String,
         userId: Long
     ): RecipeResponseDto.RecipeDetailResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.findByIdForDetail(recipeId)
+                ?: throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
 
         if (recipe.user.id != userId) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
