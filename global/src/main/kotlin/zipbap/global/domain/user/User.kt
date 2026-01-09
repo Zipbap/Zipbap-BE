@@ -85,9 +85,6 @@ class User(
         @OneToMany(mappedBy = "user", cascade = [CascadeType.REMOVE], orphanRemoval = true)
         val myCategories: MutableList<MyCategory> = mutableListOf()
 
-        @OneToOne(mappedBy = "user", cascade = [CascadeType.REMOVE], orphanRemoval = true)
-        var refreshToken: RefreshToken? = null
-
 
         fun update(nickname:String, isPrivate: Boolean, profileImage: String?, statusMessage: String?) {
                 this.nickname = nickname

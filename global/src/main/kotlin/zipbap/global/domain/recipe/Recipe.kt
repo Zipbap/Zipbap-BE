@@ -103,13 +103,10 @@ class Recipe(
         var bookmarks: MutableList<Bookmark> = mutableListOf(),
 
         @Id
-        @Column(name = "id", length = 40)
+        @Column(name = "id", length = 18)
         val id: String // RC-{userId}-{sequence}
 
 ) : BaseEntity() {
 
-        fun addViewCount() {
-                viewCount += 1
-        }
 
 }

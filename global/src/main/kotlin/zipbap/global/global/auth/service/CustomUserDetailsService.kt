@@ -4,6 +4,7 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
+import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.auth.domain.userdetails.CustomUserDetails
 
@@ -24,5 +25,9 @@ class CustomUserDetailsService(
                 let {
                     CustomUserDetails(it)
                 } ?: throw UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다.")
+    }
+
+    fun loadUserByUsername(user: User): UserDetails {
+        return CustomUserDetails(user)
     }
 }

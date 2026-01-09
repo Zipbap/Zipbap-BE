@@ -1,5 +1,6 @@
 package zipbap.user.api.feed.service
 
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -16,6 +17,7 @@ import zipbap.global.domain.recipe.RecipeRepository
 import zipbap.global.domain.user.User
 import zipbap.global.global.code.status.ErrorStatus
 import zipbap.global.global.exception.GeneralException
+import zipbap.user.api.recipe.event.RecipeViewedEvent
 
 /**
  * FeedService
@@ -29,7 +31,8 @@ class FeedService(
     private val recipeRepository: RecipeRepository,
     private val cookingOrderRepository: CookingOrderRepository,
     private val bookmarkRepository: BookmarkRepository,
-    private val recipeLikeRepository: RecipeLikeRepository
+    private val recipeLikeRepository: RecipeLikeRepository,
+        private val publisher: ApplicationEventPublisher
 ) {
 
     fun getFeedList(
@@ -72,7 +75,6 @@ class FeedService(
             GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
         }
 
-        recipe.addViewCount()
         val orders = cookingOrderRepository.findAllByRecipeId(recipeId)
 
         if (loginUser != null) {
@@ -82,6 +84,7 @@ class FeedService(
 
         row.isOwner = (loginUser?.id == recipe.user.id)
 
+        publisher.publishEvent(RecipeViewedEvent(recipeId, loginUser?.id))
         return FeedConverter.toFeedDetailDto(row, orders)
     }
 }
