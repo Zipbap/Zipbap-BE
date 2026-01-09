@@ -5,6 +5,10 @@ plugins {
 	kotlin("plugin.spring") version "2.0.10" apply false
 	kotlin("plugin.jpa") version "2.0.10" apply false
 	kotlin("kapt") version "2.0.10" apply false
+
+	// querydsl 호환성을 위한 추가
+	id("com.google.devtools.ksp") version "2.0.10-1.0.24" apply false
+
 	id("org.springframework.boot") version "3.5.5" apply false
 	id("io.spring.dependency-management") version "1.1.7" apply false
 }

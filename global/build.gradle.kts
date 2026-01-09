@@ -3,8 +3,10 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
-    kotlin("kapt")
     // spring-boot plugin은 적용하지 않음 (라이브러리 모듈)
+
+    // ✅ KSP 사용
+    id("com.google.devtools.ksp")
 }
 
 dependencyManagement {
@@ -45,10 +47,9 @@ dependencyManagement {
         // ⚠️ JDBC 드라이버는 애플리케이션 모듈(api-*)에 두는 걸 권장. (여기선 뺌)
 
         // Querydsl (APT는 여기서!)
-        implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
-        kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
-        kapt("jakarta.annotation:jakarta.annotation-api")
-        kapt("jakarta.persistence:jakarta.persistence-api")
+        val querydslVersion = "7.1"
+        implementation("io.github.openfeign.querydsl:querydsl-jpa:$querydslVersion")
+        ksp("io.github.openfeign.querydsl:querydsl-ksp-codegen:$querydslVersion")
 
         // Swagger/OpenAPI (springdoc 2.x, Spring Boot 3.x 호환)
         implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
@@ -61,25 +62,21 @@ dependencyManagement {
         implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
     }
 
-// --------- Querydsl 생성물 설정 (global ONLY) ----------
-    val generated = file("src/main/generated")
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
 
-    tasks.withType<JavaCompile> {
-        options.generatedSourceOutputDirectory.set(generated)
-    }
+noArg {
+    annotation("jakarta.persistence.Entity")
+}
 
-    sourceSets {
-        named("main") {
-            kotlin.srcDirs(generated)
-        }
-    }
-
-    tasks.named("clean") {
-        doLast { generated.deleteRecursively() }
-    }
-
-    kapt { generateStubs = true }
-// -------------------------------------------------------
+ kotlin {
+     sourceSets.main {
+         kotlin.srcDir("build/generated/ksp/main/kotlin")
+     }
+ }
 
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
