@@ -33,11 +33,11 @@ class MyPageController(
      * @return MyPageResponseDto.MyPageViewDto (프로필 + 피드 카드 + isOwner 플래그 포함)
      */
     override fun getFeedVersion(
-        user: User,
+        viewerId: Long,
         userId: Long,
         pageable: Pageable
     ): ApiResponse<MyPageResponseDto.MyPageViewDto> {
-        return ApiResponse.onSuccess(myPageService.getFeedCard(user, userId, pageable))
+        return ApiResponse.onSuccess(myPageService.getFeedCard(viewerId, userId, pageable))
     }
 
     /**
@@ -51,10 +51,10 @@ class MyPageController(
      * @return MyPageResponseDto.MyPageViewDto (프로필 + 북마크 카드 + isOwner = true)
      */
     override fun getBookmarkVersion(
-        user: User,
+        viewerId: Long,
         userId: Long,
         pageable: Pageable
     ): ApiResponse<MyPageResponseDto.MyPageViewDto> {
-        return ApiResponse.onSuccess(myPageService.getBookmarkCard(user, userId, pageable))
+        return ApiResponse.onSuccess(myPageService.getBookmarkCard(viewerId, userId, pageable))
     }
 }

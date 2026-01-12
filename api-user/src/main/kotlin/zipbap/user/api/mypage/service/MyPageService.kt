@@ -19,21 +19,21 @@ class MyPageService(
 ) {
 
     fun getBookmarkCard(
-            viewer: User,
+            viewerId: Long,
             ownerId: Long,
             pageable: Pageable) : MyPageResponseDto.MyPageViewDto {
-        if (ownerId != viewer.id) {
+        if (ownerId != viewerId) {
             throw GeneralException(ErrorStatus.UNAUTHORIZED) // 저장된 Bookmark는 자기 자신만 볼 수 있다.
         }
 
         val feedCards = myPageQueryRepository.loadBookmarkCards(ownerId, pageable)
-        val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewer.id!!)
+        val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewerId)
 
         return MyPageConverter.toDto(profileBlock, feedCards, true, false)
     }
 
     fun getFeedCard(
-            viewer: User,
+            viewerId: Long,
             ownerId: Long,
             pageable: Pageable): MyPageResponseDto.MyPageViewDto {
         userRepository.findById(ownerId).orElseThrow {
@@ -41,9 +41,9 @@ class MyPageService(
         }
 
         val feedCards = myPageQueryRepository.loadFeedCards(ownerId, pageable)
-        val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewer.id!!)
+        val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewerId)
 
-        val isOwner = (viewer.id == ownerId)
+        val isOwner = (viewerId== ownerId)
 
         return MyPageConverter.toDto(profileBlock, feedCards, isOwner, true)
     }
