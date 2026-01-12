@@ -8,11 +8,12 @@ import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 import zipbap.global.domain.user.User
+import zipbap.global.global.auth.domain.authuser.AuthUser
 import zipbap.global.global.auth.domain.userdetails.CustomUserDetails
 
 class UserInjectionArgumentResolver : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean {
-        return parameter.hasParameterAnnotation(UserInjection::class.java) && parameter.parameterType == User::class.java
+        return parameter.hasParameterAnnotation(UserInjection::class.java) && parameter.parameterType == Long::class.java
     }
 
     @Throws(Exception::class)
@@ -28,6 +29,8 @@ class UserInjectionArgumentResolver : HandlerMethodArgumentResolver {
         if (principal is CustomUserDetails) {
             return principal.user
         }
+        else if(principal is AuthUser)
+            return principal.userId
 
         return null
     }

@@ -7,11 +7,13 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
+import zipbap.global.global.auth.JwtTokenProvider
+import zipbap.global.global.auth.service.AuthenticationTokenService
 import zipbap.global.global.auth.service.TokenService
 import java.io.IOException
 
 class CustomJwtFilter(
-        private val tokenService: TokenService
+        private val authenticationTokenService: AuthenticationTokenService
 ) : OncePerRequestFilter() {
 
 
@@ -26,7 +28,7 @@ class CustomJwtFilter(
         val token = resolveBearerToken(header)
 
         if (token != null) {
-            val authenticationToken: UsernamePasswordAuthenticationToken = tokenService.authenticationToken(token)
+            val authenticationToken: UsernamePasswordAuthenticationToken = authenticationTokenService.authenticateToken(token)
             SecurityContextHolder.getContext().authentication = authenticationToken
         }
 
