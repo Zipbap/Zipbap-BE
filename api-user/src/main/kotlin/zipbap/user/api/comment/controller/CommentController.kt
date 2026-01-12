@@ -16,10 +16,10 @@ class CommentController(
 ) : CommentDocs {
 
     override fun createComment(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @RequestBody dto: CommentRequestDto.CreateCommentRequestDto
     ): ApiResponse<CommentResponseDto.CommentDetailResponseDto> =
-        ApiResponse.onSuccess(commentService.createComment(user, dto))
+        ApiResponse.onSuccess(commentService.createComment(userId, dto))
 
     override fun getComments(
         @RequestParam recipeId: String
@@ -27,19 +27,19 @@ class CommentController(
         ApiResponse.onSuccess(commentService.getComments(recipeId))
 
     override fun updateComment(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @PathVariable commentId: Long,
             @RequestBody dto: CommentRequestDto.UpdateCommentRequestDto
     ): ApiResponse<Unit> {
-        commentService.updateComment(commentId, dto, user)
+        commentService.updateComment(commentId, dto, userId)
         return ApiResponse.onSuccess(Unit)
     }
 
     override fun deleteComment(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @PathVariable commentId: Long
     ): ApiResponse<Unit> {
-        commentService.deleteComment(commentId, user)
+        commentService.deleteComment(commentId, userId)
         return ApiResponse.onSuccess(Unit)
     }
 }
