@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfigurationSource
 import zipbap.global.global.auth.filter.CustomJwtFilter
 import zipbap.global.global.auth.filter.JwtExceptionFilter
+import zipbap.global.global.auth.service.AuthenticationTokenService
 import zipbap.global.global.auth.service.TokenService
 import zipbap.user.api.auth.service.CustomOAuth2UserService
 
@@ -26,7 +27,7 @@ import zipbap.user.api.auth.service.CustomOAuth2UserService
 @EnableConfigurationProperties(SwaggerAdminProps::class)
 class UserSecurityConfig(
         private val customOAuth2UserService: CustomOAuth2UserService,
-        private val tokenService: TokenService,
+        private val authenticationTokenService: AuthenticationTokenService,
         private val objectMapper: ObjectMapper,
         private val swaggerAdminProps: SwaggerAdminProps,
         private val corsConfigurationSource: CorsConfigurationSource
@@ -83,7 +84,7 @@ class UserSecurityConfig(
 
 
         // 필터 순서: ExceptionFilter -> JwtFilter -> UsernamePasswordAuthenticationFilter
-        val jwtFilter = CustomJwtFilter(tokenService)
+        val jwtFilter = CustomJwtFilter(authenticationTokenService)
         val exFilter = JwtExceptionFilter(objectMapper)
 
         http.addFilterBefore(exFilter, UsernamePasswordAuthenticationFilter::class.java)
