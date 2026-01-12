@@ -11,6 +11,7 @@ interface RecipeQueryRepository {
     /**
      * 조건을 통해 레시피를 검색합니다.
      * QueryDSL로 작성하여 사용하지 않는 조건은 null로 작성하면 무시됩니다.
+     * 상세 조회가 아닌 목록 조회용으로, 2025-01-09 기준 화면에 필요한 join만 사용합니다.
      * findAllByUserIdAndRecipeStatus, findAllByUserIdAndRecipeStatusAndMyCategoryIdIn, findAllByMyCategoryId 통합 버전입니다.
      * @param condition     레시피 검색을 위한 조건을 넣는 data class입니다.
      * @return List of Recipe

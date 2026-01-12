@@ -141,6 +141,19 @@ object RecipeConverter {
                 )
             }
         )
+    fun toSummaryDto(
+            recipe: Recipe
+    ): RecipeResponseDto.RecipeSummaryResponseDto =
+            RecipeResponseDto.RecipeSummaryResponseDto(
+                    id = recipe.id,
+                    thumbnail = recipe.thumbnail,
+                    title = recipe.title,
+                    subtitle = recipe.subtitle,
+                    introduction = recipe.introduction,
+                    cookingTimeId = recipe.cookingTime?.id,
+                    createdAt = recipe.createdAt,
+                    updatedAt = recipe.updatedAt,
+            )
 
     /**
      * Recipe + CookingOrder -> 임시 저장 레시피 DTO (null 허용)
@@ -177,6 +190,21 @@ object RecipeConverter {
                 )
             }
         )
+
+    fun toTempSummaryDto(
+            recipe: Recipe
+    ): RecipeResponseDto.TempRecipeSummaryResponseDto {
+        return RecipeResponseDto.TempRecipeSummaryResponseDto(
+                id = recipe.id,
+                thumbnail = recipe.thumbnail,
+                title = recipe.title,
+                subtitle = recipe.subtitle,
+                introduction = recipe.introduction,
+                cookingTimeId = recipe.cookingTime?.id,
+                createdAt = recipe.createdAt,
+                updatedAt = recipe.updatedAt,
+        )
+    }
 
     /**
      * 목록/카드 뷰용 경량 DTO

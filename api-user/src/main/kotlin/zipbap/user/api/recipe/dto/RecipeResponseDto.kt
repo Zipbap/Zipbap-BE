@@ -85,6 +85,36 @@ object RecipeResponseDto {
     }
 
     /**
+     *  최종 저장된 레시피 목록/뷰 용 응답 DTO
+     *  2026-01-09 피그마 기준으로 필요한 데이터를 작성하였습니다.
+     */
+    data class RecipeSummaryResponseDto(
+            @Schema(description = "레시피 ID", example = "RC-1-00002")
+            val id: String,
+
+            @Schema(description = "대표 썸네일 URL", example = "https://cdn.zipbap.store/recipes/temp_thumbnail.jpg")
+            val thumbnail: String? = null,
+
+            @Schema(description = "레시피 제목", example = "임시 소고기 미역국")
+            val title: String? = null,
+
+            @Schema(description = "레시피 소제목", example = "임시 저장본")
+            val subtitle: String? = null,
+
+            @Schema(description = "레시피 소개", example = "아직 작성 중인 레시피입니다.")
+            val introduction: String? = null,
+
+            @Schema(description = "요리 시간 카테고리 ID", example = "2")
+            val cookingTimeId: Long? = null,
+
+            @Schema(description = "생성 시각", example = "2025-09-01T12:34:56")
+            val createdAt: LocalDateTime? = null,
+
+            @Schema(description = "수정 시각", example = "2025-09-05T15:20:00")
+            val updatedAt: LocalDateTime? = null,
+    )
+
+    /**
      *  임시 저장된 레시피 상세 응답 DTO
      */
     data class TempRecipeDetailResponseDto(
@@ -160,6 +190,37 @@ object RecipeResponseDto {
             val description: String? = null
         )
     }
+
+    /**
+     *  임시 저장된 레시피 목록/뷰 용 응답 DTO
+     *  2026-01-09 피그마 기준으로 필요한 데이터를 작성하였습니다.
+     *  temp 용은 일부 데이터가 null 일 수 있어서 따로 작성했습니다.
+     */
+    data class TempRecipeSummaryResponseDto(
+            @Schema(description = "레시피 ID", example = "RC-1-00002")
+            val id: String,
+
+            @Schema(description = "대표 썸네일 URL", example = "https://cdn.zipbap.store/recipes/temp_thumbnail.jpg")
+            val thumbnail: String? = null,
+
+            @Schema(description = "레시피 제목", example = "임시 소고기 미역국")
+            val title: String? = null,
+
+            @Schema(description = "레시피 소제목", example = "임시 저장본")
+            val subtitle: String? = null,
+
+            @Schema(description = "레시피 소개", example = "아직 작성 중인 레시피입니다.")
+            val introduction: String? = null,
+
+            @Schema(description = "요리 시간 카테고리 ID", example = "2")
+            val cookingTimeId: Long? = null,
+
+            @Schema(description = "생성 시각", example = "2025-09-01T12:34:56")
+            val createdAt: LocalDateTime? = null,
+
+            @Schema(description = "수정 시각", example = "2025-09-05T15:20:00")
+            val updatedAt: LocalDateTime? = null,
+    )
 
     /**
      * 목록/카드 뷰용 경량 DTO

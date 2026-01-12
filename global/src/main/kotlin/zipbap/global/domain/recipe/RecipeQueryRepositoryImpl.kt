@@ -11,9 +11,12 @@ class RecipeQueryRepositoryImpl(
 
     private val recipe = QRecipe.recipe
 
+    // Condition에 따라 인덱스 안 탈 수도 있음
     override fun findRecipes(condition: RecipeSearchCondition): List<Recipe> {
         return queryFactory
                 .selectFrom(recipe)
+                .leftJoin(recipe.myCategory).fetchJoin()
+                .leftJoin(recipe.cookingTime).fetchJoin()
                 .where(
                         userIdEq(condition.userId),
                         statusEq(condition.status),

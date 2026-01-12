@@ -11,9 +11,7 @@ import zipbap.global.domain.cookingorder.CookingOrderRepository
 import zipbap.global.domain.file.FileEntity
 import zipbap.global.domain.file.FileRepository
 import zipbap.global.domain.file.FileStatus
-import zipbap.global.domain.recipe.Recipe
-import zipbap.global.domain.recipe.RecipeRepository
-import zipbap.global.domain.recipe.RecipeStatus
+import zipbap.global.domain.recipe.*
 import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.util.CustomIdGenerator
 import zipbap.global.global.exception.GeneralException
@@ -23,6 +21,7 @@ import zipbap.user.api.recipe.event.RecipeViewedEvent
 @Service
 class RecipeService(
         private val recipeRepository: RecipeRepository,
+        private val recipeQueryRepository: RecipeQueryRepository,
         private val cookingOrderRepository: CookingOrderRepository,
         private val userRepository: UserRepository,
         private val categoryValidator: CategoryValidator,
@@ -166,6 +165,16 @@ class RecipeService(
         return RecipeConverter.toDto(savedRecipe, savedOrders)
     }
 
+    @Transactional
+    fun deleteRecipe(recipeId: String,
+                     userId: Long) {
+        val recipe = recipeRepository.findById(recipeId)
+                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
+        recipeFileService.deleteFileStatuses(recipeId, recipe)
+        recipeRepository.delete(recipe)
+    }
+
     /**
      * 임시 저장 레시피 조회
      */
@@ -175,6 +184,22 @@ class RecipeService(
         return recipes.map { recipe ->
             val orders = cookingOrderRepository.findAllByRecipeId(recipe.id)
             RecipeConverter.toTempDto(recipe, orders)
+        }
+    }
+
+    /**
+     * MyTempRecipes 조회의 경량버전
+     * 화면을 참고해서 화면에 필요한 최소한의 데이터만 리턴하는 버전입니다.
+     * 기존 모두 조회는 임시레시피가 아무것도 작성되지 않았다면 괜찮지만, 여러 카테고리 등 연관관계를 갖고 있는 경우
+     * 각 임시 레시피별로 cookingOrder 조회 + 카테고리 조회로 인해 조회쿼리가 폭발하므로 이를 개선하기 위한 버전입니다.
+     */
+    @Transactional(readOnly = true)
+    fun getMyTempRecipesV2(userId: Long): List<RecipeResponseDto.TempRecipeSummaryResponseDto> {
+        val searchCondition = RecipeSearchCondition(userId = userId, status = RecipeStatus.TEMPORARY)
+        val recipes = recipeQueryRepository.findRecipes(searchCondition)
+
+        return recipes.map { recipe ->
+            RecipeConverter.toTempSummaryDto(recipe)
         }
     }
 
@@ -190,6 +215,17 @@ class RecipeService(
         }
     }
 
+    /**
+     * 최정 저장 레시피 조회의 경량버전입니다.
+     */
+    @Transactional(readOnly = true)
+    fun getMyRecipesV2(userId: Long): List<RecipeResponseDto.RecipeSummaryResponseDto> {
+        val searchCondition = RecipeSearchCondition(userId = userId, status = RecipeStatus.ACTIVE)
+        val recipes = recipeQueryRepository.findRecipes(searchCondition)
+        return recipes.map { recipe ->
+            RecipeConverter.toSummaryDto(recipe)
+        }
+    }
 
     /**
      * 레시피 단일 조회 (본인 소유 & ACTIVE만)
@@ -199,10 +235,10 @@ class RecipeService(
         recipeId: String,
         userId: Long
     ): RecipeResponseDto.RecipeDetailResponseDto {
-        val recipe = recipeRepository.findByIdForDetail(recipeId)
+        val recipe = recipeQueryRepository.findRecipeDetail(recipeId)
                 ?: throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
 
-        if (recipe.user.id != userId) {
+        if (recipe.user.id != userId) { // 검증 로직이 꼭 필요할까?
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         }
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
@@ -225,37 +261,25 @@ class RecipeService(
         userId: Long,
         myCategoryIds: List<String>?
     ): List<RecipeResponseDto.MyRecipeListItemResponseDto> {
-        val recipes = if (myCategoryIds.isNullOrEmpty()) {
-            recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
-        } else {
-            recipeRepository.findAllByUserIdAndRecipeStatusAndMyCategoryIdIn(
-                userId,
-                RecipeStatus.ACTIVE,
-                myCategoryIds.toSet()
-            )
-        }
+//        val recipes = if (myCategoryIds.isNullOrEmpty()) {
+//            recipeRepository.findAllByUserIdAndRecipeStatus(userId, RecipeStatus.ACTIVE)
+//        } else {
+//            recipeRepository.findAllByUserIdAndRecipeStatusAndMyCategoryIdIn(
+//                userId,
+//                RecipeStatus.ACTIVE,
+//                myCategoryIds.toSet()
+//            )
+//        }
+        val searchCondition = RecipeSearchCondition(
+                userId = userId,
+                status = RecipeStatus.ACTIVE,
+                myCategoryIds = myCategoryIds)
+
+        val recipes = recipeQueryRepository.findRecipes(searchCondition)
 
         return recipes.map { RecipeConverter.toListItemDto(it) }
     }
 
-    @Transactional(readOnly = true)
-    fun getFeedList(userId: Long): List<RecipeResponseDto.FeedResponseDto> {
-        val feedList = recipeRepository.findAllFeed(userId, RecipeStatus.ACTIVE, false)
-
-        return feedList.map {
-            RecipeConverter.toFeedDto(it)
-        }.toList()
-    }
-
-    @Transactional
-    fun deleteRecipe(recipeId: String,
-                     userId: Long) {
-        val recipe = recipeRepository.findById(recipeId)
-                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
-        if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
-        recipeFileService.deleteFileStatuses(recipeId, recipe)
-        recipeRepository.delete(recipe)
-    }
 
 
 }
