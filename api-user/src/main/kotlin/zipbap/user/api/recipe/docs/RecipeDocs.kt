@@ -27,7 +27,7 @@ interface RecipeDocs {
     )
     @PostMapping("/temp")
     fun createTempRecipe(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<RecipeResponseDto.TempRecipeDetailResponseDto>
 
     @Operation(summary = "임시 레시피 업데이트", description = "임시 저장된 레시피를 수정합니다. 최종 저장은 /{recipeId}/finalize 사용.")
@@ -41,7 +41,7 @@ interface RecipeDocs {
     @PutMapping("/{recipeId}/temp")
     fun updateTempRecipe(
             @PathVariable("recipeId") recipeId: String,
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @RequestBody request: RecipeRequestDto.UpdateTempRecipeRequestDto
     ): ApiResponse<RecipeResponseDto.TempRecipeDetailResponseDto>
 
@@ -56,7 +56,7 @@ interface RecipeDocs {
     @PutMapping("/{recipeId}/finalize")
     fun finalizeRecipe(
             @PathVariable("recipeId") recipeId: String,
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @RequestBody request: RecipeRequestDto.FinalizeRecipeRequestDto
     ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto>
 
@@ -70,7 +70,7 @@ interface RecipeDocs {
     )
     @GetMapping("/temp")
     fun getMyTempRecipes(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<List<RecipeResponseDto.TempRecipeDetailResponseDto>>
 
     @Operation(summary = "내 완성된 레시피 전체 조회", description = "사용자의 모든 완성 레시피를 조회합니다.")
@@ -83,7 +83,7 @@ interface RecipeDocs {
     )
     @GetMapping
     fun getMyRecipes(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<List<RecipeResponseDto.RecipeDetailResponseDto>>
 
 
@@ -101,7 +101,7 @@ interface RecipeDocs {
     @GetMapping("/{recipeId}")
     fun getRecipeDetail(
         @PathVariable("recipeId") recipeId: String,
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto>
 
     @Operation(
@@ -123,13 +123,13 @@ interface RecipeDocs {
     )
     @GetMapping("/me")
     fun getMyActiveRecipesFiltered(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @RequestParam(name = "myCategoryId", required = false) myCategoryIds: List<String>?
     ): ApiResponse<List<RecipeResponseDto.MyRecipeListItemResponseDto>>
 
     @DeleteMapping("/{recipeId}")
     fun deleteRecipe(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @PathVariable("recipeId") recipeId: String
     ): ApiResponse<String>
 }
