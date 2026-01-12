@@ -86,7 +86,7 @@ interface FeedDocs {
     @GetMapping
     @PageableAsQueryParam
     fun getFeed(
-            @Parameter(description = "로그인 사용자 (없으면 null)") @UserInjection user: User?,
+            @Parameter(description = "로그인 사용자 (없으면 null)") @UserInjection userId: Long,
             @Parameter(description = "필터 조건 (ALL/TODAY/HOT/RECOMMEND/FOLLOWING)")
         @RequestParam(name = "filter", required = false) filter: FeedFilterType?,
             @ParameterObject pageable: Pageable,
@@ -122,7 +122,7 @@ interface FeedDocs {
     )
     @GetMapping("/{recipeId}")
     fun getFeedDetail(
-            @Parameter(description = "로그인 사용자 (없으면 null)") @UserInjection user: User?,
+            @Parameter(description = "로그인 사용자 (없으면 null)") @UserInjection userId: Long,
             @Parameter(description = "레시피 ID", example = "RC-1-00001") @PathVariable recipeId: String
     ): ApiResponse<FeedResponseDto.FeedDetailResponseDto>
 }

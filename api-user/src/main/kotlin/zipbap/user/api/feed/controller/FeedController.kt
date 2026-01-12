@@ -22,20 +22,20 @@ class FeedController(
 ) : FeedDocs {
 
     override fun getFeed(
-            user: User?,
+            userId: Long,
             filter: FeedFilterType?,
             pageable: Pageable,
             condition: String?
     ): ApiResponse<Page<FeedResponseDto.FeedItemResponseDto>> =
         ApiResponse.onSuccess(
-            feedService.getFeedList(user, filter ?: FeedFilterType.ALL, pageable, condition)
+            feedService.getFeedList(userId, filter ?: FeedFilterType.ALL, pageable, condition)
         )
 
     override fun getFeedDetail(
-            user: User?,
+            userId: Long,
             recipeId: String
     ): ApiResponse<FeedResponseDto.FeedDetailResponseDto> =
         ApiResponse.onSuccess(
-            feedService.getFeedDetail(user, recipeId)
+            feedService.getFeedDetail(userId, recipeId)
         )
 }
