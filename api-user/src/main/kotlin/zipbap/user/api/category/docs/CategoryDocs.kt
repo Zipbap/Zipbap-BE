@@ -27,6 +27,6 @@ interface CategoryDocs {
     )
     @GetMapping("/api/categories")
     fun getAllCategories(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<CategoryResponseDto.CategoryListResponseDto>
 }

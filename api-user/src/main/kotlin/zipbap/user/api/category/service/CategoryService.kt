@@ -50,8 +50,7 @@ class CategoryService(
         val mainIngredients = mainIngredientRepository.findAll()
         val methods = methodRepository.findAll()
         val situations = situationRepository.findAll()
-        val myCategories = myCategoryRepository.findAll()
-            .filter { it.user.id == userId }
+        val myCategories = myCategoryRepository.findAllByUserId(userId)
 
         return CategoryConverter.toCategoryListResponseDto(
             cookingTimes,
