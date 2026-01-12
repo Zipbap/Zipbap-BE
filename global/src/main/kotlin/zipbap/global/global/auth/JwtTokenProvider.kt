@@ -46,10 +46,10 @@ class JwtTokenProvider(
 
         return Jwts.builder()
             .setSubject(user.id.toString())
-            .claim("email", user.email)
+            .claim(CLAIM_EMAIL, user.email)
             .setIssuedAt(Date())
             .setExpiration(expiryDate)
-            .claim("type", "access")
+            .claim(CLAIM_TYPE, TYPE_ACCESS)
             .signWith(signingKey, SignatureAlgorithm.HS512)
             .compact()
     }
@@ -64,7 +64,7 @@ class JwtTokenProvider(
             .setSubject(user.id.toString())
             .setIssuedAt(Date())
             .setExpiration(expiryDate)
-            .claim("type", "refresh")
+            .claim(CLAIM_TYPE, TYPE_REFRESH)
             .signWith(signingKey, SignatureAlgorithm.HS512)
             .compact()
     }
@@ -73,20 +73,28 @@ class JwtTokenProvider(
      * 토큰에서 userId(Long) 추출
      */
     fun getUserIdFromToken(token: String): Long =
-        parseClaims(token).subject.toLong()
+        getUserId(parseAndValidateToken(token))
 
     /**
-     * 토큰에서 email 추출 (optional)
+     * @param claims        JWT에 포함된 메타데이터입니다.
+     * Claim 기반 user ID 추출
+     * 토큰이 유효하다면 userId는 존재한다고 가정
      */
-    fun getEmailFromToken(token: String): String? =
-        parseClaims(token).get("email", String::class.java)
+    fun getUserId(claims: Claims): Long = claims.subject.toLong()
+
+    /**
+     * Claim 기반 email 추출
+     */
+    fun getEmail(claims: Claims): String? = claims.get(CLAIM_EMAIL, String::class.java)
 
     /**
      * 토큰 유효성 검증
+     * 검증 과정에서 예외가 터지더라도 비즈니스 로직은 유지하되, 검증 실패를 전달하는거에 목적을 두고 진행해서 다시 안던짐
      */
     fun validateToken(token: String?): Boolean {
         return try {
-            jwtParser.parseClaimsJws(token)
+            if (token.isNullOrBlank()) return false
+            parseAndValidateToken(token)
             true
         } catch (ex: SecurityException) {
             logger.error("Invalid JWT signature: {}", ex.message); false
@@ -102,18 +110,27 @@ class JwtTokenProvider(
     }
 
     /**
+     * 예외 터지면 예외 잡는 필터가 책임지고 처리
+     */
+    fun parseAndValidateToken(token: String): Claims =
+        jwtParser.parseClaimsJws(token).body
+
+
+    /**
      * 토큰 타입 확인 (access/refresh)
      */
     fun getTokenType(token: String): String =
-        parseClaims(token).get("type", String::class.java)
+        parseAndValidateToken(token).get(CLAIM_TYPE, String::class.java)
 
-    fun isAccess(token: String): Boolean = getTokenType(token) == "access"
-    fun isRefresh(token: String): Boolean = getTokenType(token) == "refresh"
+    fun isAccess(token: String): Boolean = getTokenType(token) == TYPE_ACCESS
+    fun isRefresh(token: String): Boolean = getTokenType(token) == TYPE_REFRESH
 
-    private fun parseClaims(token: String): Claims =
-        jwtParser.parseClaimsJws(token).body
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(JwtTokenProvider::class.java)
+        private const val CLAIM_TYPE = "type"
+        private const val CLAIM_EMAIL = "email"
+        private const val TYPE_ACCESS = "access"
+        private const val TYPE_REFRESH = "refresh"
     }
 }
