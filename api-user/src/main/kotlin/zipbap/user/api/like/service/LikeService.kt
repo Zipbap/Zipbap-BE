@@ -7,14 +7,14 @@ import zipbap.global.domain.like.RecipeLike
 import zipbap.global.domain.like.RecipeLikeRepository
 import zipbap.global.domain.recipe.RecipeRepository
 import zipbap.global.domain.recipe.RecipeStatus
-import zipbap.global.domain.user.User
+import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.exception.GeneralException
 import zipbap.global.global.code.status.ErrorStatus
 
 @Service
 class LikeService(
         private val recipeLikeRepository: RecipeLikeRepository,
-        private val recipeRepository: RecipeRepository
+        private val recipeRepository: RecipeRepository, private val userRepository: UserRepository
 ) {
 
     /**
@@ -26,19 +26,20 @@ class LikeService(
      * @return 레시피 ID와 현재 좋아요 수
      */
     @Transactional
-    fun likeRecipe(user: User, recipeId: String): LikeResponseDto {
+    fun likeRecipe(userId: Long, recipeId: String): LikeResponseDto {
         val recipe = recipeRepository.findById(recipeId)
             .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         }
 
-        if (recipeLikeRepository.existsByUserAndRecipe(user, recipe)) {
+        if (recipeLikeRepository.existsByUserAndRecipe(userRef, recipe)) {
             throw GeneralException(ErrorStatus.ALREADY_LIKED_RECIPE)
         }
 
-        recipeLikeRepository.save(RecipeLike(user, recipe))
+        recipeLikeRepository.save(RecipeLike(userRef, recipe))
         val count = recipeLikeRepository.countByRecipe(recipe)
 
         return LikeResponseDto(recipe.id, count)
@@ -52,19 +53,20 @@ class LikeService(
      * @return 레시피 ID와 현재 좋아요 수
      */
     @Transactional
-    fun unlikeRecipe(user: User, recipeId: String): LikeResponseDto {
+    fun unlikeRecipe(userId: Long, recipeId: String): LikeResponseDto {
         val recipe = recipeRepository.findById(recipeId)
             .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         }
 
-        if (!recipeLikeRepository.existsByUserAndRecipe(user, recipe)) {
+        if (!recipeLikeRepository.existsByUserAndRecipe(userRef, recipe)) {
             throw GeneralException(ErrorStatus.LIKE_NOT_FOUND)
         }
 
-        recipeLikeRepository.deleteByUserAndRecipe(user, recipe)
+        recipeLikeRepository.deleteByUserAndRecipe(userRef, recipe)
         val count = recipeLikeRepository.countByRecipe(recipe)
 
         return LikeResponseDto(recipe.id, count)

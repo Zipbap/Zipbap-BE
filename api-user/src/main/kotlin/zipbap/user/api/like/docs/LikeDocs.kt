@@ -26,7 +26,7 @@ interface LikeDocs {
     )
     @PostMapping
     fun likeRecipe(
-            @Parameter(hidden = true) user: User,
+            @Parameter(hidden = true) userId: Long,
             @Parameter(description = "레시피 ID", example = "RC-1-00001")
         @PathVariable recipeId: String
     ): ApiResponse<LikeResponseDto>
@@ -41,7 +41,7 @@ interface LikeDocs {
     )
     @DeleteMapping
     fun unlikeRecipe(
-            @Parameter(hidden = true) user: User,
+            @Parameter(hidden = true) userId: Long,
             @Parameter(description = "레시피 ID", example = "RC-1-00001")
         @PathVariable recipeId: String
     ): ApiResponse<LikeResponseDto>
