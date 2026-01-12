@@ -38,7 +38,7 @@ interface MyCategoryDocs {
     @PostMapping
     fun createMyCategory(
         @RequestBody dto: MyCategoryRequestDto.CreateMyCategoryDto,
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<MyCategoryResponseDto>
 
 
@@ -63,7 +63,7 @@ interface MyCategoryDocs {
         @Parameter(description = "수정할 카테고리 ID")
         @PathVariable("id") id: String,
         @RequestBody dto: MyCategoryRequestDto.UpdateMyCategoryDto,
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<MyCategoryResponseDto>
 
 
@@ -84,7 +84,7 @@ interface MyCategoryDocs {
     )
     @GetMapping
     fun getMyCategories(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<List<MyCategoryResponseDto>>
 
 
@@ -110,6 +110,6 @@ interface MyCategoryDocs {
     fun deleteMyCategory(
         @Parameter(description = "삭제할 카테고리 ID")
         @PathVariable("id") id: String,
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<Unit>
 }

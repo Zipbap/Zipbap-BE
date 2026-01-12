@@ -18,26 +18,26 @@ class MyCategoryController(
 
     override fun createMyCategory(
         dto: MyCategoryRequestDto.CreateMyCategoryDto,
-        user: User
+        userId: Long
     ): ApiResponse<MyCategoryResponseDto> =
-        ApiResponse.onSuccess(myCategoryService.createMyCategory(dto, user.id!!))
+        ApiResponse.onSuccess(myCategoryService.createMyCategory(dto, userId))
 
     override fun updateMyCategory(
         id: String,
         dto: MyCategoryRequestDto.UpdateMyCategoryDto,
-        user: User
+        userId: Long
     ): ApiResponse<MyCategoryResponseDto> =
-        ApiResponse.onSuccess(myCategoryService.updateMyCategory(id, dto, user.id!!))
+        ApiResponse.onSuccess(myCategoryService.updateMyCategory(id, dto, userId))
 
     override fun getMyCategories(
-        user: User
+            userId: Long
     ): ApiResponse<List<MyCategoryResponseDto>> =
-        ApiResponse.onSuccess(myCategoryService.getMyCategories(user.id!!))
+        ApiResponse.onSuccess(myCategoryService.getMyCategories(userId))
 
     override fun deleteMyCategory(
         id: String,
-        user: User
+        userId: Long
     ): ApiResponse<Unit> =
-        ApiResponse.onSuccess(myCategoryService.deleteMyCategory(id, user.id!!))
+        ApiResponse.onSuccess(myCategoryService.deleteMyCategory(id, userId))
 }
 
