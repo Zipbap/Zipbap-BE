@@ -8,6 +8,7 @@ import zipbap.global.domain.user.User
 import zipbap.app.global.ApiResponse
 
 @RestController
+@Deprecated(message = "요구사항 변경시, Follow가 삭제 될 수 있습니다.")
 class FollowController(
         private val followService: FollowService
 ) : FollowDocs {
