@@ -16,17 +16,17 @@ class UserController(
 ) : UserDocs {
 
 
-    override fun getProfile(user: User): ApiResponse<UserResponseDto.UserProfileDto> {
-        return ApiResponse.onSuccess(userService.getUserProfile(user))
+    override fun getProfile(userId: Long): ApiResponse<UserResponseDto.UserProfileDto> {
+        return ApiResponse.onSuccess(userService.getUserProfile(userId))
     }
 
-    override fun updateProfile(user: User, dto:
+    override fun updateProfile(userId: Long, dto:
     UserRequestDto.UserUpdateDto): ApiResponse<UserResponseDto.UserProfileDto> {
-        return ApiResponse.onSuccess(userService.updateUserProfile(user, dto))
+        return ApiResponse.onSuccess(userService.updateUserProfile(userId, dto))
     }
 
-    override fun deleteUser(user: User): ApiResponse<String> {
-        userService.deleteUser(user)
+    override fun deleteUser(userId: Long): ApiResponse<String> {
+        userService.deleteUser(userId)
         return ApiResponse.onSuccess("Delete Success!")
     }
 

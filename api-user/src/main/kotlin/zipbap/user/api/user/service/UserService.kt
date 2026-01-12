@@ -11,6 +11,8 @@ import zipbap.global.domain.file.FileStatus
 import zipbap.global.domain.user.SocialType
 import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
+import zipbap.global.global.code.status.ErrorStatus
+import zipbap.global.global.exception.GeneralException
 
 @Service
 @Transactional(readOnly = true)
@@ -37,18 +39,20 @@ class UserService(
         userRepository.save(user)
     }
 
-    fun getUserProfile(user: User): UserResponseDto.UserProfileDto {
+    fun getUserProfile(userId: Long): UserResponseDto.UserProfileDto {
+        val user = userRepository.findById(userId)
+                .orElseThrow {GeneralException(ErrorStatus.USER_NOT_FOUND)}
         return UserConverter.toProfileDto(user)
     }
 
     @Transactional
     fun updateUserProfile(
-        user: User,
+            userId: Long,
         dto: UserRequestDto.UserUpdateDto
     ): UserResponseDto.UserProfileDto {
 
         // ✅ 반드시 영속 상태 User 로 다시 조회
-        val managedUser = userRepository.findById(user.id!!)
+        val managedUser = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
         // 요청에서 사용된 파일 URL 수집
@@ -98,12 +102,12 @@ class UserService(
 
 
     @Transactional
-    fun deleteUser(user: User) {
+    fun deleteUser(userId: Long) {
 
         /**
          * ✅ 삭제 시에도 항상 영속 엔티티 사용해야 함
          */
-        val managedUser = userRepository.findById(user.id!!)
+        val managedUser = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
         // 소셜 타입별 후처리 (카카오 unlink / 애플 revoke 등 가능)
