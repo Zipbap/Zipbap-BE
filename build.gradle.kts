@@ -31,8 +31,20 @@ subprojects {
 		}
 	}
 
+
+
 	tasks.withType<Test> {
 		useJUnitPlatform()
+	}
+
+	apply(plugin = "io.spring.dependency-management")
+
+	// 💡 Kotlin DSL 문법에 맞게 명시적으로 Extension을 호출합니다.
+	configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
+		imports {
+			mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.5")
+			mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
+		}
 	}
 }
 

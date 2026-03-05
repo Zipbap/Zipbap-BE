@@ -1,19 +1,24 @@
 package zipbap.global.global.util
 
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.ObjectMetadata
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
+import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.io.IOException
 import java.net.URL
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.*
 
+/**
+ * 2026.03.05 부 V2로 update
+ */
 @Component
 class S3Uploader(
-    private val amazonS3: AmazonS3,
+    private val s3Client: S3Client,
     @Value("\${cloud.aws.s3.bucket}") private val bucket: String
 ) {
 
@@ -26,19 +31,27 @@ class S3Uploader(
      */
     @Throws(IOException::class)
     fun uploadFile(file: MultipartFile, dirName: String): String {
-        val fileName = "$dirName/${UUID.randomUUID()}-${file.originalFilename}"
+        val originalFilename = file.originalFilename ?: "unknown"
+        val key = "$dirName/${UUID.randomUUID()}-$originalFilename"
 
-        val metadata = ObjectMetadata().apply {
-            contentLength = file.size
-            contentType = file.contentType
-        }
+        // 💡 1. 메타데이터와 업로드 정보를 담은 PutObjectRequest 생성
+        val putObjectRequest = PutObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .contentType(file.contentType)
+            .contentLength(file.size)
+            .build()
 
+        // 💡 2. S3에 파일 업로드 (RequestBody로 InputStream을 감싸서 전달)
         file.inputStream.use { inputStream ->
-            amazonS3.putObject(bucket, fileName, inputStream, metadata)
+            val requestBody = RequestBody.fromInputStream(inputStream, file.size)
+            s3Client.putObject(putObjectRequest, requestBody)
         }
 
-        return amazonS3.getUrl(bucket, fileName).toString()
+        // 💡 3. 업로드된 파일의 URL 반환 (v2 유틸리티 활용)
+        return s3Client.utilities().getUrl { it.bucket(bucket).key(key) }.toString()
     }
+
 
     /**
      * S3에 업로드된 파일을 삭제합니다.
@@ -47,7 +60,15 @@ class S3Uploader(
      */
     fun deleteFile(fileUrl: String) {
         val key = extractKeyFromUrl(fileUrl)
-        amazonS3.deleteObject(bucket, key)
+
+        // 💡 v2 방식의 DeleteObjectRequest 생성
+        val deleteObjectRequest = DeleteObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build()
+
+        // 💡 S3Client를 사용하여 삭제 수행
+        s3Client.deleteObject(deleteObjectRequest)
     }
 
     /**

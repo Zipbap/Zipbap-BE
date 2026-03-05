@@ -9,20 +9,20 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-dependencyManagement {
-    imports {
-        // 루트에서 쓰는 Spring Boot 버전에 맞춰 주세요
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.5")
-        // (옵션) Spring Cloud/AWS를 쓴다면 대응 BOM도 함께
-        // Boot 3.x 계열에서는 아래 중 하나만 선택해 사용하세요
-
-        // 1) Spring Cloud 전체 BOM (필요할 때만)
-        // mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
-
-        // 2) AWS Spring Cloud 3.x (권장: 구버전 starter-aws 대신)
-        // mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
-    }
-}
+//dependencyManagement {
+//    imports {
+//        // 루트에서 쓰는 Spring Boot 버전에 맞춰 주세요
+//        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.5")
+//        // (옵션) Spring Cloud/AWS를 쓴다면 대응 BOM도 함께
+//        // Boot 3.x 계열에서는 아래 중 하나만 선택해 사용하세요
+//
+//        // 1) Spring Cloud 전체 BOM (필요할 때만)
+//        // mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
+//
+//        // 2) AWS Spring Cloud 3.x (권장: 구버전 starter-aws 대신)
+//         mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
+//    }
+//}
 
     dependencies {
         // 공통
@@ -57,9 +57,15 @@ dependencyManagement {
         // 로그
         implementation("net.logstash.logback:logstash-logback-encoder:8.1")
 
-        // (선택) AWS 공통 어댑터가 정말 global에 필요하다면 아래를 두되,
-        // Boot 3.x와의 호환성 이슈가 있는 구버전임에 유의
-        implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
+        // 클라우드
+        implementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
+
+        // 테스트용
+        testImplementation("com.h2database:h2")
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     }
 
 allOpen {
@@ -80,4 +86,8 @@ noArg {
 
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
