@@ -8,8 +8,6 @@ import zipbap.user.api.recipe.dto.RecipeRequestDto
 import zipbap.user.api.recipe.dto.RecipeResponseDto
 import zipbap.user.api.recipe.validator.CategoryValidator
 import zipbap.global.domain.cookingorder.CookingOrderRepository
-import zipbap.global.domain.file.FileEntity
-import zipbap.global.domain.file.FileRepository
 import zipbap.global.domain.file.FileStatus
 import zipbap.global.domain.recipe.*
 import zipbap.global.domain.user.UserRepository
@@ -38,7 +36,7 @@ class RecipeService(
             throw GeneralException(ErrorStatus.RECIPE_BAD_REQUEST)
         }
 
-        val tmp = recipeRepository.findTopByUser_IdOrderByIdDesc(userId)
+        val tmp = recipeRepository.findTopByUserIdOrderByIdDesc(userId)
         val sequence = (tmp?.id?.split("-")?.lastOrNull()?.toLongOrNull() ?: 0L) + 1
 
         val generatedId = CustomIdGenerator.generate("RC", userId, sequence)
