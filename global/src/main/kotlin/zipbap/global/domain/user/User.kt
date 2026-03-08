@@ -9,9 +9,9 @@ import zipbap.global.domain.category.mycategory.MyCategory
 import zipbap.global.domain.like.RecipeLike
 import zipbap.global.domain.follow.Follow
 import zipbap.global.domain.file.FileEntity
-import zipbap.global.global.auth.domain.token.entity.RefreshToken
 
 @Entity
+@Table(name = "users")
 class User(
 
         @Column(name = "email", unique = true, nullable = false, length = 100)
