@@ -7,6 +7,9 @@ plugins {
 
     // ✅ KSP 사용
     id("com.google.devtools.ksp")
+
+    // fixture 각 모듈간 공유를 위한 의존성
+    id("java-test-fixtures")
 }
 
 //dependencyManagement {
