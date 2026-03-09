@@ -14,19 +14,19 @@ class BookmarkController(
         private val bookmarkService: BookmarkService
 ) : BookmarkDocs {
 
-    override fun markRecipe(user: User, recipeId: String
+    override fun markRecipe(userId: Long, recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
-            ApiResponse.onSuccess(bookmarkService.markRecipe(user, recipeId))
+            ApiResponse.onSuccess(bookmarkService.markRecipe(userId, recipeId))
 
-    override fun unmarkRecipe(user: User, recipeId: String
+    override fun unmarkRecipe(userId: Long, recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
-            ApiResponse.onSuccess(bookmarkService.unmarkRecipe(user, recipeId))
+            ApiResponse.onSuccess(bookmarkService.unmarkRecipe(userId, recipeId))
 
     override fun countBookmarks(recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
             ApiResponse.onSuccess(bookmarkService.countBookmarks(recipeId))
 
-    override fun userRecipes(user: User
+    override fun userRecipes(userId: Long
     ): ApiResponse<List<BookmarkResponseDto.BookmarkRecipeResponseDto>> =
-            ApiResponse.onSuccess(bookmarkService.getMarkedRecipe(user))
+            ApiResponse.onSuccess(bookmarkService.getMarkedRecipe(userId))
 }

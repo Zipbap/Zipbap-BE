@@ -5,6 +5,10 @@ plugins {
 	kotlin("plugin.spring") version "2.0.10" apply false
 	kotlin("plugin.jpa") version "2.0.10" apply false
 	kotlin("kapt") version "2.0.10" apply false
+
+	// querydsl 호환성을 위한 추가
+	id("com.google.devtools.ksp") version "2.0.10-1.0.24" apply false
+
 	id("org.springframework.boot") version "3.5.5" apply false
 	id("io.spring.dependency-management") version "1.1.7" apply false
 }
@@ -27,8 +31,20 @@ subprojects {
 		}
 	}
 
+
+
 	tasks.withType<Test> {
 		useJUnitPlatform()
+	}
+
+	apply(plugin = "io.spring.dependency-management")
+
+	// 💡 Kotlin DSL 문법에 맞게 명시적으로 Extension을 호출합니다.
+	configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
+		imports {
+			mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.5")
+			mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
+		}
 	}
 }
 

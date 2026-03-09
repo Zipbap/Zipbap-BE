@@ -14,6 +14,7 @@ import zipbap.app.global.ApiResponse
 
 @RequestMapping("/api/follows")
 @Tag(name = "Follow", description = "팔로우 API")
+@Deprecated(message = "요구사항 변경시, Follow가 삭제 될 수 있습니다.")
 interface FollowDocs {
 
     @Operation(

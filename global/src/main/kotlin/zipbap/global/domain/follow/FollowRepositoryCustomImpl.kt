@@ -2,8 +2,7 @@ package zipbap.global.domain.follow
 
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
-import zipbap.global.domain.follow.QFollow.follow
-
+import zipbap.global.domain.follow.QFollow.Companion.follow
 class FollowRepositoryCustomImpl(
         private val queryFactory: JPAQueryFactory
 ): FollowRepositoryCustom {
@@ -11,6 +10,7 @@ class FollowRepositoryCustomImpl(
     override fun searchFollowingList(userId: Long, searchCondition: String?): List<Follow> {
         val builder = BooleanBuilder()
         builder.and(follow.follower.id.eq(userId))
+        follow
 
         if (!searchCondition.isNullOrBlank()) {
             builder.and(follow.following.nickname.like("$searchCondition%"))

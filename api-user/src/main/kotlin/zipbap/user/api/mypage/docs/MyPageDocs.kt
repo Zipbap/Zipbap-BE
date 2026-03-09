@@ -53,7 +53,7 @@ interface MyPageDocs {
     @PageableAsQueryParam
     @GetMapping("/{userId}/feed")
     fun getFeedVersion(
-        @UserInjection user: User,
+        @UserInjection viewerId: Long,
 
         @Parameter(description = "조회할 마이페이지 주인의 userId")
         @PathVariable userId: Long,
@@ -93,7 +93,7 @@ interface MyPageDocs {
     @PageableAsQueryParam
     @GetMapping("/{userId}/bookmark")
     fun getBookmarkVersion(
-        @UserInjection user: User,
+        @UserInjection viewerId: Long,
 
         @Parameter(description = "조회 대상 유저 ID (본인만 가능)")
         @PathVariable userId: Long,

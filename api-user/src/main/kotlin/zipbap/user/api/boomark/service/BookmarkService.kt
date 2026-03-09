@@ -9,6 +9,7 @@ import zipbap.global.domain.bookmark.BookmarkRepository
 import zipbap.global.domain.recipe.RecipeRepository
 import zipbap.global.domain.recipe.RecipeStatus
 import zipbap.global.domain.user.User
+import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.code.status.ErrorStatus
 import zipbap.global.global.exception.GeneralException
 import zipbap.global.global.util.CustomIdGenerator
@@ -17,7 +18,8 @@ import zipbap.global.global.util.CustomIdGenerator
 @Transactional(readOnly = true)
 class BookmarkService(
         private val bookmarkRepository: BookmarkRepository,
-        private val recipeRepository: RecipeRepository
+        private val recipeRepository: RecipeRepository,
+        private val userRepository: UserRepository
 ) {
 
     /**
@@ -25,25 +27,26 @@ class BookmarkService(
      * Recipe가 ACTIVE 상태여야 하고, 이전에 북마크한 기록이 있으면 안된다.
      */
     @Transactional
-    fun markRecipe(user: User, recipeId: String
+    fun markRecipe(userId: Long, recipeId: String
     ): BookmarkResponseDto.BookmarkSimpleResponseDto {
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         }
 
-        if (bookmarkRepository.existsByUserAndRecipe(user, recipe)) {
+        if (bookmarkRepository.existsByUserAndRecipe(userRef, recipe)) {
             throw GeneralException(ErrorStatus.ALREADY_BOOKMARK_RECIPE)
         }
 
-        val tmp = bookmarkRepository.findTopByUserIdOrderByIdDesc(user.id!!)
+        val tmp = bookmarkRepository.findTopByUserIdOrderByIdDesc(userRef.id!!)
         val seq = tmp?.id?.split("-")?.lastOrNull()?.toLongOrNull() ?: 0L
-        val generatedId = CustomIdGenerator.generate("BM", user.id!!, seq + 1)
+        val generatedId = CustomIdGenerator.generate("BM", userRef.id!!, seq + 1)
 
 
-        bookmarkRepository.save(Bookmark(user, recipe, generatedId))
+        bookmarkRepository.save(Bookmark(userRef, recipe, generatedId))
         val count = bookmarkRepository.countByRecipe(recipe)
 
         return BookmarkConverter.toSimpleDto(recipe.id, count)
@@ -54,20 +57,21 @@ class BookmarkService(
      * Recipe가 ACTIVE 상태여야 하고, 북마크가 활성화된 상태여야 한다.
      */
     @Transactional
-    fun unmarkRecipe(user: User, recipeId: String
+    fun unmarkRecipe(userId: Long, recipeId: String
     ): BookmarkResponseDto.BookmarkSimpleResponseDto {
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         }
 
-        if (!bookmarkRepository.existsByUserAndRecipe(user, recipe)) {
+        if (!bookmarkRepository.existsByUserAndRecipe(userRef, recipe)) {
             throw GeneralException(ErrorStatus.BOOKMARK_NOT_FOUND)
         }
 
-        bookmarkRepository.deleteByUserAndRecipe(user, recipe)
+        bookmarkRepository.deleteByUserAndRecipe(userRef, recipe)
         val count = bookmarkRepository.countByRecipe(recipe)
 
         return BookmarkConverter.toSimpleDto(recipe.id, count)
@@ -89,8 +93,8 @@ class BookmarkService(
         return BookmarkConverter.toSimpleDto(recipe.id, count)
     }
 
-    fun getMarkedRecipe(user: User): List<BookmarkResponseDto.BookmarkRecipeResponseDto> {
-        val recipes = bookmarkRepository.findByUser(user, RecipeStatus.ACTIVE)
+    fun getMarkedRecipe(userId: Long): List<BookmarkResponseDto.BookmarkRecipeResponseDto> {
+        val recipes = bookmarkRepository.findByUser(userId, RecipeStatus.ACTIVE)
                 .map {
                     BookmarkConverter.toThumbnailDto(it.recipe)
                 } .toList()

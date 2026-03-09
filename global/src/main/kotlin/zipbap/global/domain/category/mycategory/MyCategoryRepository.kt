@@ -9,6 +9,8 @@ interface MyCategoryRepository : JpaRepository<MyCategory, String> {
     fun existsByUserIdAndName(userId: Long, name: String): Boolean
     fun countByUserId(userId: Long): Long
 
+    fun findAllByUserId(userId: Long): List<MyCategory>
+
     @Query(
             "SELECT COALESCE(MAX(CAST(SUBSTRING(c.id, LENGTH(CONCAT('MC-', :userId, '-')) + 1) AS long)), 0) " +
                     "FROM MyCategory c WHERE c.user.id = :userId"

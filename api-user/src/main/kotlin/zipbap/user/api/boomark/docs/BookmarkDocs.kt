@@ -49,7 +49,7 @@ interface BookmarkDocs {
             ]
     )
     @PostMapping("/{recipeId}")
-    fun markRecipe(@UserInjection user: User,
+    fun markRecipe(@UserInjection userId: Long,
                    @PathVariable recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto>
 
@@ -88,7 +88,7 @@ interface BookmarkDocs {
             ]
     )
     @DeleteMapping("/{recipeId}")
-    fun unmarkRecipe(@UserInjection user: User,
+    fun unmarkRecipe(@UserInjection userId: Long,
                      @PathVariable recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto>
 
@@ -162,6 +162,6 @@ interface BookmarkDocs {
             ]
     )
     @GetMapping("/users")
-    fun userRecipes(@UserInjection user: User
+    fun userRecipes(@UserInjection userId: Long
     ): ApiResponse<List<BookmarkResponseDto.BookmarkRecipeResponseDto>>
 }

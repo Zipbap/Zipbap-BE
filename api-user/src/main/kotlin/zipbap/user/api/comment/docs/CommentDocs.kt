@@ -29,7 +29,7 @@ interface CommentDocs {
     )
     @PostMapping
     fun createComment(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @RequestBody dto: CommentRequestDto.CreateCommentRequestDto
     ): ApiResponse<CommentResponseDto.CommentDetailResponseDto>
 
@@ -56,7 +56,7 @@ interface CommentDocs {
     )
     @PutMapping("/{commentId}")
     fun updateComment(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @PathVariable commentId: Long,
             @RequestBody dto: CommentRequestDto.UpdateCommentRequestDto
     ): ApiResponse<Unit>
@@ -69,7 +69,7 @@ interface CommentDocs {
     )
     @DeleteMapping("/{commentId}")
     fun deleteComment(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @PathVariable commentId: Long
     ): ApiResponse<Unit>
 }

@@ -15,6 +15,7 @@ import zipbap.global.domain.feed.FeedQueryRepository
 import zipbap.global.domain.like.RecipeLikeRepository
 import zipbap.global.domain.recipe.RecipeRepository
 import zipbap.global.domain.user.User
+import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.code.status.ErrorStatus
 import zipbap.global.global.exception.GeneralException
 import zipbap.user.api.recipe.event.RecipeViewedEvent
@@ -27,20 +28,27 @@ import zipbap.user.api.recipe.event.RecipeViewedEvent
 @Service
 @Transactional(readOnly = true)
 class FeedService(
-    private val feedQueryRepository: FeedQueryRepository,
-    private val recipeRepository: RecipeRepository,
-    private val cookingOrderRepository: CookingOrderRepository,
-    private val bookmarkRepository: BookmarkRepository,
-    private val recipeLikeRepository: RecipeLikeRepository,
-        private val publisher: ApplicationEventPublisher
+        private val feedQueryRepository: FeedQueryRepository,
+        private val recipeRepository: RecipeRepository,
+        private val cookingOrderRepository: CookingOrderRepository,
+        private val bookmarkRepository: BookmarkRepository,
+        private val recipeLikeRepository: RecipeLikeRepository,
+        private val publisher: ApplicationEventPublisher, private val userRepository: UserRepository
 ) {
 
+    /**
+     * Feed는 삭제 가능성이 있으므로 user -> userId로 인한 변경을 최소화 하여 돌아갈 정도만 수정
+     */
     fun getFeedList(
-        loginUser: User?,
+        loginUserId: Long,
         filter: FeedFilterType,
         pageable: Pageable,
         condition: String?
     ): Page<FeedResponseDto.FeedItemResponseDto> {
+        val loginUser = userRepository.findById(loginUserId).orElseThrow{
+            GeneralException(ErrorStatus.USER_NOT_FOUND)
+        }
+
         if (filter == FeedFilterType.FOLLOWING && loginUser == null) {
             throw GeneralException(ErrorStatus.UNAUTHORIZED)
         }
@@ -64,10 +72,12 @@ class FeedService(
     }
 
     fun getFeedDetail(
-        loginUser: User?,
+        loginUserId: Long,
         recipeId: String
     ): FeedResponseDto.FeedDetailResponseDto {
-
+        val loginUser = userRepository.findById(loginUserId).orElseThrow{
+                GeneralException(ErrorStatus.USER_NOT_FOUND)
+        }
         val row = feedQueryRepository.findFeedDetail(loginUser, recipeId)
             ?: throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
 
