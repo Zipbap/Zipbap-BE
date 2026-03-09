@@ -86,7 +86,8 @@ class User(
         val myCategories: MutableList<MyCategory> = mutableListOf()
 
 
-        fun update(nickname:String, isPrivate: Boolean, profileImage: String?, statusMessage: String?) {
+        fun update(nickname:String = this.nickname, isPrivate: Boolean = this.isPrivate,
+                   profileImage: String? = this.profileImage, statusMessage: String? = this.statusMessage) {
                 this.nickname = nickname
                 this.isPrivate = isPrivate
                 this.profileImage = profileImage
