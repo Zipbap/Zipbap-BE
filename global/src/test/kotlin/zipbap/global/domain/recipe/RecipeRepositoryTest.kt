@@ -6,7 +6,7 @@ import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import support.RepositoryTest
+import support.annotation.RepositoryTest
 import support.fixture.MyCategoryFixture
 import support.fixture.RecipeFixture
 import support.fixture.UserFixture

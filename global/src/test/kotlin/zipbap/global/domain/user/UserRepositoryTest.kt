@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import support.RepositoryTest
+import support.annotation.RepositoryTest
 
 @RepositoryTest
 class UserRepositoryTest @Autowired constructor(
