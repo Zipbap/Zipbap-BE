@@ -24,18 +24,23 @@ class UserService(
         return userRepository.existsByEmail(email)
     }
 
+    /*
+        이제 register가 id를 반환할 수 있도록 변경하였습니다. - 2026.03.11
+        현재 같은 email이면 social 구분을 하지 않고 통합 버전으로 이용되도록 로직이 동작합니다.
+        나중에 관련 기획이 추가되면 변경 고려해야합니ㅏㄷ.
+     */
     @Transactional
-    fun register(registrationId: String, username: String, email: String) {
-        if (isUserExists(email)) return
+    fun register(registrationId: String, username: String, email: String): Long {
+        return userRepository.findByEmail(email)?.id ?: run { // 기존 user가 있으면 객체 찾아서 반환 없으면 생성해서 저장 후 반환
+            val social = SocialType.valueOf(registrationId.uppercase())
+            val newUser = User(
+                email = email,
+                nickname = username,
+                socialType = social
+            )
+            userRepository.save(newUser).id!!
+        }
 
-        val social = SocialType.valueOf(registrationId.uppercase())
-        val user = User(
-            email = email,
-            nickname = username,
-            socialType = social
-        )
-
-        userRepository.save(user)
     }
 
     fun getUserProfile(userId: Long): UserResponseDto.UserProfileDto {
