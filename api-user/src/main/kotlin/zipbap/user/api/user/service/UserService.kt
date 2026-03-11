@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional
 import zipbap.user.api.user.converter.UserConverter
 import zipbap.user.api.user.dto.UserRequestDto
 import zipbap.user.api.user.dto.UserResponseDto
-import zipbap.global.domain.file.FileEntity
 import zipbap.global.domain.file.FileRepository
 import zipbap.global.domain.file.FileStatus
 import zipbap.global.domain.user.SocialType
@@ -29,11 +28,11 @@ class UserService(
     fun register(registrationId: String, username: String, email: String) {
         if (isUserExists(email)) return
 
-        val Social = SocialType.valueOf(registrationId.uppercase())
+        val social = SocialType.valueOf(registrationId.uppercase())
         val user = User(
             email = email,
             nickname = username,
-            socialType = Social
+            socialType = social
         )
 
         userRepository.save(user)
