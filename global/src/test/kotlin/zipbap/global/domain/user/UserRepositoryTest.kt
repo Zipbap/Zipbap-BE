@@ -65,8 +65,8 @@ class UserRepositoryTest @Autowired constructor(
         val foundUser = userRepository.findByEmail(email)
 
         //then
-        assertThat(foundUser).isPresent()
-        assertThat(foundUser.get().email).isEqualTo(email)
+        assertThat(foundUser).isNotNull()
+        assertThat(foundUser!!.email).isEqualTo(email)
     }
 
     @Test
@@ -79,7 +79,7 @@ class UserRepositoryTest @Autowired constructor(
         val foundUser = userRepository.findByEmail(email)
 
         //then
-        assertThat(foundUser).isEmpty()
+        assertThat(foundUser).isNull()
     }
 
 }

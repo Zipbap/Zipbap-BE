@@ -13,5 +13,5 @@ interface UserRepository : JpaRepository<User, Long> {
     /**
      * 이메일로 사용자 조회
      */
-    fun findByEmail(email: String): Optional<User>
+    fun findByEmail(email: String): User?
 }

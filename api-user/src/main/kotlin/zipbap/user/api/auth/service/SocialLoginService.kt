@@ -48,9 +48,8 @@ class SocialLoginService(
         val email: String = providerUser.email
 
         // email로 User 조회 후 userId 기반 토큰 발급
-        val user = userRepository.findByEmail(email).orElseThrow {
-            GeneralException(ErrorStatus.USER_NOT_FOUND)
-        }
+        val user = userRepository.findByEmail(email)
+            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
 
         val accessToken: String = tokenService.generateAccessToken(user)
         val refreshToken: String = tokenService.generateRefreshToken(user)
