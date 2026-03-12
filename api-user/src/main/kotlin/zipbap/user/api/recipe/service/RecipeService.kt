@@ -14,17 +14,18 @@ import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.util.CustomIdGenerator
 import zipbap.global.global.exception.GeneralException
 import zipbap.global.global.code.status.ErrorStatus
+import zipbap.user.api.file.service.FileService
 import zipbap.user.api.recipe.event.RecipeViewedEvent
 
 @Service
 class RecipeService(
-        private val recipeRepository: RecipeRepository,
-        private val recipeQueryRepository: RecipeQueryRepository,
-        private val cookingOrderRepository: CookingOrderRepository,
-        private val userRepository: UserRepository,
-        private val categoryValidator: CategoryValidator,
-        private val recipeFileService: RecipeFileService,
-        private val publisher: ApplicationEventPublisher
+    private val recipeRepository: RecipeRepository,
+    private val recipeQueryRepository: RecipeQueryRepository,
+    private val cookingOrderRepository: CookingOrderRepository,
+    private val userRepository: UserRepository,
+    private val categoryValidator: CategoryValidator,
+    private val fileService: FileService,
+    private val publisher: ApplicationEventPublisher
 ) {
 
     /**
@@ -70,7 +71,7 @@ class RecipeService(
         dto.cookingOrders?.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
         // 파일 상태 업데이트 (임시 저장은 TEMPORARY_UPLOAD 유지)
-        recipeFileService.updateFileStatuses(recipeId, usedFileUrls, FileStatus.TEMPORARY_UPLOAD, recipe)
+        fileService.updateRecipeFileStatuses(recipeId, usedFileUrls, FileStatus.TEMPORARY_UPLOAD, recipe)
 
         // 레시피 기본 필드 업데이트
         recipe.apply {
@@ -129,7 +130,7 @@ class RecipeService(
         dto.cookingOrders.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
         // 파일 상태 업데이트 (최종 저장은 FINALIZED 처리)
-        recipeFileService.updateFileStatuses(recipeId, usedFileUrls, FileStatus.FINALIZED, recipe)
+        fileService.updateRecipeFileStatuses(recipeId, usedFileUrls, FileStatus.FINALIZED, recipe)
 
         // 레시피 엔티티 업데이트
         recipe.apply {
@@ -169,7 +170,7 @@ class RecipeService(
         val recipe = recipeRepository.findById(recipeId)
                 .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
-        recipeFileService.deleteFileStatuses(recipeId, recipe)
+        fileService.deleteFileStatuses(recipeId, recipe)
         recipeRepository.delete(recipe)
     }
 

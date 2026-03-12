@@ -12,12 +12,14 @@ import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.code.status.ErrorStatus
 import zipbap.global.global.exception.GeneralException
+import zipbap.user.api.file.service.FileService
+import org.springframework.data.repository.findByIdOrNull
 
 @Service
 @Transactional(readOnly = true)
 class UserService(
     private val userRepository: UserRepository,
-    private val fileRepository: FileRepository
+    private val fileService: FileService,
 ) {
 
     fun isUserExists(email: String): Boolean {
@@ -44,8 +46,8 @@ class UserService(
     }
 
     fun getUserProfile(userId: Long): UserResponseDto.UserProfileDto {
-        val user = userRepository.findById(userId)
-                .orElseThrow {GeneralException(ErrorStatus.USER_NOT_FOUND)}
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
         return UserConverter.toProfileDto(user)
     }
 
@@ -56,15 +58,15 @@ class UserService(
     ): UserResponseDto.UserProfileDto {
 
         // ✅ 반드시 영속 상태 User 로 다시 조회
-        val managedUser = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found") }
+        val managedUser = userRepository.findByIdOrNull(userId)
+            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
 
         // 요청에서 사용된 파일 URL 수집
         val usedFileUrls = mutableSetOf<String>()
         dto.profileImage?.let { usedFileUrls.add(it) }
 
         // ✅ 파일 상태 업데이트는 영속 상태 유저로 처리
-        updateFileStatuses(usedFileUrls, FileStatus.FINALIZED, managedUser)
+            fileService.updateUserFileStatuses(usedFileUrls, FileStatus.FINALIZED, managedUser)
 
         managedUser.update(
             nickname = dto.nickname,
@@ -77,42 +79,14 @@ class UserService(
     }
 
 
-    /**
-     * 공통 파일 상태 업데이트
-     * - 사용 안 된 파일 → UNTRACKED + user = null
-     * - 사용된 파일 → targetStatus + user = managedUser
-     */
-    private fun updateFileStatuses(
-        usedFileUrls: Set<String>,
-        targetStatus: FileStatus,
-        managedUser: User
-    ) {
-        val attachedFiles = fileRepository.findAllByUser(managedUser)
-
-        // 사용 안된 파일 정리
-        attachedFiles.filter { it.fileUrl !in usedFileUrls }.forEach { file ->
-            file.status = FileStatus.UNTRACKED
-            file.user = null
-        }
-
-        // 사용된 파일 상태 처리
-        usedFileUrls.forEach { url ->
-            fileRepository.findByFileUrl(url)?.apply {
-                this.user = managedUser   // ✅ Detached user 대신 managedUser 사용
-                this.status = targetStatus
-            }
-        }
-    }
-
-
     @Transactional
     fun deleteUser(userId: Long) {
 
         /**
          * ✅ 삭제 시에도 항상 영속 엔티티 사용해야 함
          */
-        val managedUser = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found") }
+        val managedUser = userRepository.findByIdOrNull(userId)
+            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
 
         // 소셜 타입별 후처리 (카카오 unlink / 애플 revoke 등 가능)
         when (managedUser.socialType) {
