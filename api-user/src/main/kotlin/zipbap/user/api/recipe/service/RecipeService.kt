@@ -20,7 +20,6 @@ import zipbap.user.api.recipe.event.RecipeViewedEvent
 @Service
 class RecipeService(
     private val recipeRepository: RecipeRepository,
-    private val recipeQueryRepository: RecipeQueryRepository,
     private val cookingOrderRepository: CookingOrderRepository,
     private val userRepository: UserRepository,
     private val categoryValidator: CategoryValidator,
@@ -195,7 +194,7 @@ class RecipeService(
     @Transactional(readOnly = true)
     fun getMyTempRecipesV2(userId: Long): List<RecipeResponseDto.TempRecipeSummaryResponseDto> {
         val searchCondition = RecipeSearchCondition(userId = userId, status = RecipeStatus.TEMPORARY)
-        val recipes = recipeQueryRepository.findRecipes(searchCondition)
+        val recipes = recipeRepository.findRecipes(searchCondition)
 
         return recipes.map { recipe ->
             RecipeConverter.toTempSummaryDto(recipe)
@@ -220,7 +219,7 @@ class RecipeService(
     @Transactional(readOnly = true)
     fun getMyRecipesV2(userId: Long): List<RecipeResponseDto.RecipeSummaryResponseDto> {
         val searchCondition = RecipeSearchCondition(userId = userId, status = RecipeStatus.ACTIVE)
-        val recipes = recipeQueryRepository.findRecipes(searchCondition)
+        val recipes = recipeRepository.findRecipes(searchCondition)
         return recipes.map { recipe ->
             RecipeConverter.toSummaryDto(recipe)
         }
@@ -234,7 +233,7 @@ class RecipeService(
         recipeId: String,
         userId: Long
     ): RecipeResponseDto.RecipeDetailResponseDto {
-        val recipe = recipeQueryRepository.findRecipeDetail(recipeId)
+        val recipe = recipeRepository.findRecipeDetail(recipeId)
                 ?: throw GeneralException(ErrorStatus.RECIPE_NOT_FOUND)
 
         if (recipe.user.id != userId) { // 검증 로직이 꼭 필요할까?
@@ -274,7 +273,7 @@ class RecipeService(
                 status = RecipeStatus.ACTIVE,
                 myCategoryIds = myCategoryIds)
 
-        val recipes = recipeQueryRepository.findRecipes(searchCondition)
+        val recipes = recipeRepository.findRecipes(searchCondition)
 
         return recipes.map { RecipeConverter.toListItemDto(it) }
     }
