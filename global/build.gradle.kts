@@ -69,6 +69,8 @@ plugins {
 
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+        testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
     }
 
 allOpen {
