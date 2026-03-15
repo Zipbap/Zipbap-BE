@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
-interface RecipeRepository : JpaRepository<Recipe, String> {
+interface RecipeRepository : JpaRepository<Recipe, String>, RecipeQueryRepository {
 
     fun countByUserId(userId: Long): Long
 

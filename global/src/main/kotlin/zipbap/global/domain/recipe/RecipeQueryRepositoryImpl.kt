@@ -35,10 +35,12 @@ class RecipeQueryRepositoryImpl(
                 .fetchOne()
     }
 
-    override fun findAllByMyCategoryIds(myCategoryIds: Collection<String>): List<Recipe> {
+    override fun findAllByMyCategoryIds(myCategoryIds: Collection<String>, userId: Long): List<Recipe> {
         return queryFactory
                 .selectFrom(recipe)
-                .where(myCategoryIdsIn(myCategoryIds))
+                .where(
+                    recipe.user.id.eq(userId),
+                    myCategoryIdsIn(myCategoryIds))
                 .fetch()
     }
 

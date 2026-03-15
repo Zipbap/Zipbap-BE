@@ -31,7 +31,7 @@ interface RecipeQueryRepository {
      * @param myCategoryIds     레시피 검색을 위한 myCategory collection
      * @return List of Recipe
      */
-    fun findAllByMyCategoryIds(myCategoryIds: Collection<String>): List<Recipe>
+    fun findAllByMyCategoryIds(myCategoryIds: Collection<String>, userId: Long): List<Recipe>
 
     /**
      * Recipe의 모든 연관관계를 조회하는 상세조회입니다.
