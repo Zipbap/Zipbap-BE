@@ -1,6 +1,7 @@
 package zipbap.user.api.recipe.service
 
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zipbap.user.api.recipe.converter.RecipeConverter
@@ -57,8 +58,7 @@ class RecipeService(
             userId: Long,
             recipeId: String
     ): RecipeResponseDto.TempRecipeDetailResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.findByIdOrThrow(recipeId)
 
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
@@ -116,8 +116,7 @@ class RecipeService(
         userId: Long,
         dto: RecipeRequestDto.FinalizeRecipeRequestDto
     ): RecipeResponseDto.RecipeDetailResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.findByIdOrThrow(recipeId)
 
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
@@ -166,8 +165,7 @@ class RecipeService(
     @Transactional
     fun deleteRecipe(recipeId: String,
                      userId: Long) {
-        val recipe = recipeRepository.findById(recipeId)
-                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.findByIdOrThrow(recipeId)
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
         fileService.deleteFileStatuses(recipeId, recipe)
         recipeRepository.delete(recipe)

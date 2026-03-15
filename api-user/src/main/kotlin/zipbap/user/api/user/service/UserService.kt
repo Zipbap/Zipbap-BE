@@ -5,15 +5,12 @@ import org.springframework.transaction.annotation.Transactional
 import zipbap.user.api.user.converter.UserConverter
 import zipbap.user.api.user.dto.UserRequestDto
 import zipbap.user.api.user.dto.UserResponseDto
-import zipbap.global.domain.file.FileRepository
 import zipbap.global.domain.file.FileStatus
 import zipbap.global.domain.user.SocialType
 import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
-import zipbap.global.global.code.status.ErrorStatus
-import zipbap.global.global.exception.GeneralException
 import zipbap.user.api.file.service.FileService
-import org.springframework.data.repository.findByIdOrNull
+import zipbap.global.domain.user.findByIdOrThrow
 
 @Service
 @Transactional(readOnly = true)
@@ -46,8 +43,7 @@ class UserService(
     }
 
     fun getUserProfile(userId: Long): UserResponseDto.UserProfileDto {
-        val user = userRepository.findByIdOrNull(userId)
-            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+        val user = userRepository.findByIdOrThrow(userId)
         return UserConverter.toProfileDto(user)
     }
 
@@ -58,8 +54,7 @@ class UserService(
     ): UserResponseDto.UserProfileDto {
 
         // ✅ 반드시 영속 상태 User 로 다시 조회
-        val managedUser = userRepository.findByIdOrNull(userId)
-            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+        val managedUser = userRepository.findByIdOrThrow(userId)
 
         // 요청에서 사용된 파일 URL 수집
         val usedFileUrls = mutableSetOf<String>()
@@ -85,8 +80,7 @@ class UserService(
         /**
          * ✅ 삭제 시에도 항상 영속 엔티티 사용해야 함
          */
-        val managedUser = userRepository.findByIdOrNull(userId)
-            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+        val managedUser = userRepository.findByIdOrThrow(userId)
 
         // 소셜 타입별 후처리 (카카오 unlink / 애플 revoke 등 가능)
         when (managedUser.socialType) {
