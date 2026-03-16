@@ -71,6 +71,12 @@ plugins {
 
         testFixturesImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
+        // 1. 순수 단위 테스트용 MockK (확장 함수 테스트 등에서 mockk() 사용할 때)
+        testImplementation("io.mockk:mockk:1.13.10")
+
+        // 2. 스프링 통합 테스트용 SpringMockK (@MockkBean 사용할 때)
+        testImplementation("com.ninja-squad:springmockk:4.0.2")
+
     }
 
 allOpen {
