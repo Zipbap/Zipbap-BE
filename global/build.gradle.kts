@@ -63,6 +63,19 @@ plugins {
         // 클라우드
         implementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
 
+        // Flyway (DB DDL 버전 이력 관리용)
+        // Flyway Core (핵심 로직)
+        implementation("org.flywaydb:flyway-core")
+
+        // MySQL 전용 마이그레이션 지원 (Flyway 8.x 이상 필수)
+        implementation("org.flywaydb:flyway-core")
+        implementation("org.flywaydb:flyway-mysql")
+
+
+        // JDBC 드라이버: 앱 모듈에 둬서 연결 계정/권한 분리 유연화
+        runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
+
+
         // 테스트용
         testImplementation("com.h2database:h2")
         testImplementation("org.springframework.boot:spring-boot-starter-test")

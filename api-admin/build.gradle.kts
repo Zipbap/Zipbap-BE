@@ -19,7 +19,7 @@ dependencies {
     // (관리자 콘솔이 OAuth2 Client 흐름을 쓴다면 client도 추가)
 
     // JDBC 드라이버 (관리자 전용 계정으로 분리 시 여기에)
-    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
+//    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
