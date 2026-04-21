@@ -13,7 +13,7 @@ class CategoryController(
     private val categoryService: CategoryService
 ) : CategoryDocs {
 
-    override fun getAllCategories(@UserInjection user: User):
+    override fun getAllCategories(@UserInjection userId: Long):
             ApiResponse<CategoryResponseDto.CategoryListResponseDto> =
-        ApiResponse.onSuccess(categoryService.getAllCategories(user.id!!))
+        ApiResponse.onSuccess(categoryService.getAllCategories(userId))
 }

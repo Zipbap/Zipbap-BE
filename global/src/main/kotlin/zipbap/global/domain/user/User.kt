@@ -9,9 +9,9 @@ import zipbap.global.domain.category.mycategory.MyCategory
 import zipbap.global.domain.like.RecipeLike
 import zipbap.global.domain.follow.Follow
 import zipbap.global.domain.file.FileEntity
-import zipbap.global.global.auth.domain.token.entity.RefreshToken
 
 @Entity
+@Table(name = "users")
 class User(
 
         @Column(name = "email", unique = true, nullable = false, length = 100)
@@ -86,7 +86,8 @@ class User(
         val myCategories: MutableList<MyCategory> = mutableListOf()
 
 
-        fun update(nickname:String, isPrivate: Boolean, profileImage: String?, statusMessage: String?) {
+        fun update(nickname:String = this.nickname, isPrivate: Boolean = this.isPrivate,
+                   profileImage: String? = this.profileImage, statusMessage: String? = this.statusMessage) {
                 this.nickname = nickname
                 this.isPrivate = isPrivate
                 this.profileImage = profileImage

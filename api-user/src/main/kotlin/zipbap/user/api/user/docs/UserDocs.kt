@@ -54,7 +54,7 @@ interface UserDocs {
     )
     @GetMapping("/profile")
     fun getProfile(
-            @UserInjection user: User
+            @UserInjection userId: Long
     ): ApiResponse<UserResponseDto.UserProfileDto>
 
     @Operation(
@@ -93,7 +93,7 @@ interface UserDocs {
     )
     @PutMapping("/profile")
     fun updateProfile(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             @RequestBody dto: UserRequestDto.UserUpdateDto
     ): ApiResponse<UserResponseDto.UserProfileDto>
 
@@ -130,7 +130,7 @@ interface UserDocs {
     )
     @DeleteMapping
     fun deleteUser(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<String>
 
 

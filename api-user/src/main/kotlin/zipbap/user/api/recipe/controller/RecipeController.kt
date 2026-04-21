@@ -15,50 +15,50 @@ class RecipeController(
 ) : RecipeDocs {
 
     override fun createTempRecipe(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<RecipeResponseDto.TempRecipeDetailResponseDto> =
-        ApiResponse.onSuccess(recipeService.createTempRecipe(user.id!!))
+        ApiResponse.onSuccess(recipeService.createTempRecipe(userId))
 
     override fun updateTempRecipe(
             recipeId: String,
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             request: RecipeRequestDto.UpdateTempRecipeRequestDto
     ): ApiResponse<RecipeResponseDto.TempRecipeDetailResponseDto> =
-        ApiResponse.onSuccess(recipeService.updateTempRecipe(request, user.id!!, recipeId))
+        ApiResponse.onSuccess(recipeService.updateTempRecipe(request, userId, recipeId))
 
     override fun finalizeRecipe(
             recipeId: String,
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             request: RecipeRequestDto.FinalizeRecipeRequestDto
     ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto> =
-        ApiResponse.onSuccess(recipeService.finalizeRecipe(recipeId, user.id!!, request))
+        ApiResponse.onSuccess(recipeService.finalizeRecipe(recipeId, userId, request))
 
     override fun getMyTempRecipes(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<List<RecipeResponseDto.TempRecipeDetailResponseDto>> =
-        ApiResponse.onSuccess(recipeService.getMyTempRecipes(user.id!!))
+        ApiResponse.onSuccess(recipeService.getMyTempRecipes(userId))
 
     override fun getMyRecipes(
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<List<RecipeResponseDto.RecipeDetailResponseDto>> =
-        ApiResponse.onSuccess(recipeService.getMyRecipes(user.id!!))
+        ApiResponse.onSuccess(recipeService.getMyRecipes(userId))
 
     override fun getRecipeDetail(
         recipeId: String,
-        @UserInjection user: User
+        @UserInjection userId: Long
     ): ApiResponse<RecipeResponseDto.RecipeDetailResponseDto> =
-        ApiResponse.onSuccess(recipeService.getRecipeDetail(recipeId, user.id!!))
+        ApiResponse.onSuccess(recipeService.getRecipeDetail(recipeId, userId))
 
     override fun getMyActiveRecipesFiltered(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             myCategoryIds: List<String>?
     ): ApiResponse<List<RecipeResponseDto.MyRecipeListItemResponseDto>> =
-        ApiResponse.onSuccess(recipeService.getMyActiveRecipesFiltered(user.id!!, myCategoryIds))
+        ApiResponse.onSuccess(recipeService.getMyActiveRecipesFiltered(userId, myCategoryIds))
 
     override fun deleteRecipe(
-            @UserInjection user: User,
+            @UserInjection userId: Long,
             recipeId: String): ApiResponse<String> {
-        recipeService.deleteRecipe(recipeId, user.id!!)
+        recipeService.deleteRecipe(recipeId, userId)
         return ApiResponse.onSuccess("Delete Success!")
     }
 }

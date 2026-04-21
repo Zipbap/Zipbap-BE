@@ -16,8 +16,8 @@ interface BookmarkRepository : JpaRepository<Bookmark, Long> {
     fun countByUserId(userId: Long): Long
 
     @Query("SELECT b FROM Bookmark b JOIN FETCH b.recipe " +
-            "WHERE b.user = :user AND b.recipe.recipeStatus = :recipeStatus ")
-    fun findByUser(user: User, recipeStatus: RecipeStatus): List<Bookmark>
+            "WHERE b.user.id = :userId AND b.recipe.recipeStatus = :recipeStatus ")
+    fun findByUser(@Param("userId")userId: Long, recipeStatus: RecipeStatus): List<Bookmark>
 
     fun findTopByUserIdOrderByIdDesc(userId: Long): Bookmark?
 

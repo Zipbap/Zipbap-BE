@@ -14,11 +14,11 @@ class LikeController(
     private val likeService: LikeService
 ) : LikeDocs {
 
-    override fun likeRecipe(@UserInjection user: User, @PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
-        ApiResponse.onSuccess(likeService.likeRecipe(user, recipeId))
+    override fun likeRecipe(@UserInjection userId: Long, @PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
+        ApiResponse.onSuccess(likeService.likeRecipe(userId, recipeId))
 
-    override fun unlikeRecipe(@UserInjection user: User, @PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
-        ApiResponse.onSuccess(likeService.unlikeRecipe(user, recipeId))
+    override fun unlikeRecipe(@UserInjection userId: Long, @PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
+        ApiResponse.onSuccess(likeService.unlikeRecipe(userId, recipeId))
 
     override fun countLikes(@PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
         ApiResponse.onSuccess(likeService.countLikes(recipeId))

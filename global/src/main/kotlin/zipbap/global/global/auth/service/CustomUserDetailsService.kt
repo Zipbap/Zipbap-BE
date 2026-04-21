@@ -21,7 +21,7 @@ class CustomUserDetailsService(
      */
     @Throws(UsernameNotFoundException::class)
     override fun loadUserByUsername(username: String): UserDetails {
-        return userRepository.findByEmail(username).orElse(null)?.
+        return userRepository.findByEmail(username)?.
                 let {
                     CustomUserDetails(it)
                 } ?: throw UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다.")

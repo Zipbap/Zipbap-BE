@@ -24,9 +24,9 @@ class AuthAdminController(
 
     @GetMapping("/access-token")
     fun getAccessToken(@RequestParam email: String): ApiResponse<String> {
-        val user = userRepository.findByEmail(email).orElseThrow {
-            GeneralException(ErrorStatus.USER_NOT_FOUND)
-        }
+        val user = userRepository.findByEmail(email)
+            ?: throw GeneralException(ErrorStatus.USER_NOT_FOUND)
+
         return ApiResponse.onSuccess(tokenService.generateAccessToken(user))
     }
 

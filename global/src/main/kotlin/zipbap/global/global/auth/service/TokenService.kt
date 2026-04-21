@@ -57,25 +57,7 @@ class TokenService(
         return jwtTokenProvider.generateAccessToken(user)
     }
 
-    /**
-     * Authentication 객체 생성
-     */
-    fun authenticationToken(token: String): UsernamePasswordAuthenticationToken {
-        require(token.isNotBlank()) { "토큰은 비어있으면 안됩니다." }
 
-        if (!validateAccessToken(token)) {
-            throw GeneralException(ErrorStatus.INVALID_TOKEN)
-        }
-
-        val userId: Long = jwtTokenProvider.getUserIdFromToken(token)
-        val user: User = userRepository.findById(userId).orElseThrow {
-            throw GeneralException(ErrorStatus.USER_NOT_FOUND)
-        }
-
-        val userDetails: UserDetails = customUserDetailsService.loadUserByUsername(user)
-
-        return UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
-    }
 
     /**
      * Refresh Token 검증 후 Access Token 재발급
