@@ -21,8 +21,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
 
-    // JDBC 드라이버: 앱 모듈에 둬서 연결 계정/권한 분리 유연화
-    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
