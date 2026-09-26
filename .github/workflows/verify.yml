@@ -1,0 +1,32 @@
+name: Verify backend
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      report-prefix:
+        type: string
+        default: backend
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Test against disposable MariaDB and build both apps
+        run: bash ./gradlew :global:test :api-user:test :api-admin:test :api-user:bootJar :api-admin:bootJar --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ inputs.report-prefix || 'backend' }}-test-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: '**/build/reports/tests/'

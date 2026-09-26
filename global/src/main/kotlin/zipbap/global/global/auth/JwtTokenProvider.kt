@@ -96,16 +96,10 @@ class JwtTokenProvider(
             if (token.isNullOrBlank()) return false
             parseAndValidateToken(token)
             true
-        } catch (ex: SecurityException) {
-            logger.error("Invalid JWT signature: {}", ex.message); false
-        } catch (ex: MalformedJwtException) {
-            logger.error("Invalid JWT token: {}", ex.message); false
-        } catch (ex: ExpiredJwtException) {
-            logger.error("Expired JWT token: {}", ex.message); false
-        } catch (ex: UnsupportedJwtException) {
-            logger.error("Unsupported JWT token: {}", ex.message); false
-        } catch (ex: IllegalArgumentException) {
-            logger.error("JWT claims string is empty: {}", ex.message); false
+        } catch (_: JwtException) {
+            logger.debug("JWT validation failed"); false
+        } catch (_: IllegalArgumentException) {
+            logger.debug("JWT validation failed"); false
         }
     }
 

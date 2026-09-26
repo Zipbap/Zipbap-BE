@@ -126,7 +126,7 @@ interface BookmarkDocs {
             ]
     )
     @GetMapping("/{recipeId}/count")
-    fun countBookmarks(@PathVariable recipeId: String
+    fun countBookmarks(@UserInjection userId: Long, @PathVariable recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto>
 
     @Operation(

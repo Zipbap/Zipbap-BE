@@ -20,7 +20,8 @@ import zipbap.global.domain.user.UserRepository
 @Import(QueryDslTestConfig::class) // query DSL 테스트시 수동으로 끌고와줘야함
 class RecipeQueryRepositoryTest @Autowired constructor(
     private val recipeRepository: RecipeRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val jdbc: org.springframework.jdbc.core.JdbcTemplate
 ) {
 
     @Test
@@ -70,7 +71,7 @@ class RecipeQueryRepositoryTest @Autowired constructor(
 
         // then
         assertThat(result).hasSize(1)
-        assertThat(result[0].id).isEqualTo(matrix["u1_active_pub"]!!.id)
+        assertThat(result[0].id).isEqualTo(matrix["u1_active_priv"]!!.id)
     }
 
     @Test
@@ -260,8 +261,10 @@ class RecipeQueryRepositoryTest @Autowired constructor(
         val user = userRepository.save(UserFixture.create())
 
         val oldRecipe = recipeRepository.save(RecipeFixture.create(user))
-        Thread.sleep(10) // JPA Auditing 시간 차이를 만들기 위한 미세 딜레이 (필요시)
         val latestRecipe = recipeRepository.save(RecipeFixture.create(user))
+        recipeRepository.flush()
+        // MariaDB V1 timestamps have second precision; avoid wall-clock sleeps/ties.
+        jdbc.update("UPDATE recipe SET created_at = '2000-01-01 00:00:00' WHERE id = ?", oldRecipe.id)
 
         // when
         val result = recipeRepository.findLatestByUserIdOrderByCreatedAtDesc(user.id!!)

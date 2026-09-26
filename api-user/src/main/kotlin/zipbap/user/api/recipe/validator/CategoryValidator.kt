@@ -51,8 +51,9 @@ class CategoryValidator(
      * strict = true → Finalize 요청 (모든 값 필수)
      * strict = false → Update(임시) 요청 (값이 들어온 경우만 검증)
      */
-    fun validateAll(dto: CategoryValidatable, strict: Boolean): ValidatedCategories {
+    fun validateAll(dto: CategoryValidatable, strict: Boolean, userId: Long): ValidatedCategories {
         val myCategory = validateOptional(dto.myCategoryId, myCategoryRepository, ErrorStatus.CATEGORY_NOT_FOUND)
+        if (myCategory != null && myCategory.user.id != userId) throw GeneralException(ErrorStatus.CATEGORY_NOT_FOUND)
         val cookingType = validateOptional(dto.cookingTypeId, cookingTypeRepository, ErrorStatus.COOKING_TYPE_NOT_FOUND)
         val situation = validateOptional(dto.situationId, situationRepository, ErrorStatus.SITUATION_NOT_FOUND)
         val mainIngredient = validateOptional(dto.mainIngredientId, mainIngredientRepository, ErrorStatus.MAIN_INGREDIENT_NOT_FOUND)
@@ -78,8 +79,9 @@ class CategoryValidator(
         )
     }
 
-    fun validateOptional(dto: CategoryValidatable): ValidatedCategories {
+    fun validateOptional(dto: CategoryValidatable, userId: Long): ValidatedCategories {
         val myCategory = validateOptional(dto.myCategoryId, myCategoryRepository, ErrorStatus.CATEGORY_NOT_FOUND)
+        if (myCategory != null && myCategory.user.id != userId) throw GeneralException(ErrorStatus.CATEGORY_NOT_FOUND)
         val cookingType = validateOptional(dto.cookingTypeId, cookingTypeRepository, ErrorStatus.COOKING_TYPE_NOT_FOUND)
         val situation = validateOptional(dto.situationId, situationRepository, ErrorStatus.SITUATION_NOT_FOUND)
         val mainIngredient = validateOptional(dto.mainIngredientId, mainIngredientRepository, ErrorStatus.MAIN_INGREDIENT_NOT_FOUND)

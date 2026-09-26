@@ -45,6 +45,7 @@ interface CommentDocs {
     )
     @GetMapping
     fun getComments(
+        @UserInjection userId: Long,
         @RequestParam recipeId: String
     ): ApiResponse<List<CommentResponseDto.CommentDetailResponseDto>>
 

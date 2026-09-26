@@ -16,6 +16,12 @@ class KakaoUser(
     private val kakaoAccount = (oAuth2User.attributes["kakao_account"] as? Map<String, Any>?) ?: emptyMap()
     private val profile = (kakaoAccount["profile"] as? Map<String, Any>?) ?: emptyMap()
 
+    init {
+        if (kakaoAccount["is_email_valid"] != true || kakaoAccount["is_email_verified"] != true) {
+            throw GeneralException(ErrorStatus.OAUTH2_LOGIN_FAIL)
+        }
+    }
+
     override val id: String = (oAuth2User.attributes["id"] ?: "").toString()
 
     override val username: String =

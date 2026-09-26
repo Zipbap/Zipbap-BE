@@ -84,9 +84,9 @@ class RecipeRepositoryTest @Autowired constructor(
         val savedUser1 = userRepository.save(user1)
         val savedUser2 = userRepository.save(user2)
 
-        val recipe1 = RecipeFixture.create(savedUser1)
-        val recipe2 = RecipeFixture.create(savedUser2)
-        val recipe3 = RecipeFixture.create(savedUser1)
+        val recipe1 = RecipeFixture.create(savedUser1, id = "RC-TEST-00001")
+        val recipe2 = RecipeFixture.create(savedUser2, id = "RC-TEST-00002")
+        val recipe3 = RecipeFixture.create(savedUser1, id = "RC-TEST-00003")
 
         val recipes = recipeRepository.saveAll(listOf(recipe1, recipe2, recipe3))
 

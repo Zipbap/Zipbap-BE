@@ -1,6 +1,5 @@
 package zipbap.user.api.auth.service
 
-import com.nimbusds.jose.JWSObject
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
@@ -17,7 +16,8 @@ import zipbap.user.auth.oauth2user.entity.KakaoUser
 
 @Service
 class CustomOAuth2UserService(
-    userService: UserService
+    userService: UserService,
+    private val appleIdTokenVerifier: AppleIdTokenVerifier
 ) : AbstractOAuth2UserService(userService), OAuth2UserService<OAuth2UserRequest, OAuth2User?> {
 
     private val delegate: OAuth2UserService<OAuth2UserRequest, OAuth2User> = DefaultOAuth2UserService()
@@ -37,7 +37,7 @@ class CustomOAuth2UserService(
             // Apple — id_token 디코딩
             "apple" -> {
                 val tokenValue = userRequest.accessToken.tokenValue
-                val attributes = parseAppleIdToken(tokenValue)
+                val attributes = appleIdTokenVerifier.verify(tokenValue, clientRegistration.clientId)
 
                 // Apple의 id_token에는 roles 개념이 없으므로 ROLE_USER로 임시 부여
                 val fakeUser = DefaultOAuth2User(
@@ -58,26 +58,4 @@ class CustomOAuth2UserService(
         return providerUser
     }
 
-    /**
-     *  Apple id_token(JWT) 디코드 → claims 반환
-     */
-    private fun parseAppleIdToken(idToken: String): Map<String, Any> {
-        return try {
-            val jwsObject = JWSObject.parse(idToken)
-            val payload = jwsObject.payload.toJSONObject()
-
-            val email = payload["email"] as? String
-                ?: throw GeneralException(ErrorStatus.SOCIAL_LOGIN_MISSING_FIELD)
-            val sub = payload["sub"] as? String
-                ?: throw GeneralException(ErrorStatus.SOCIAL_LOGIN_MISSING_FIELD)
-
-            mapOf(
-                "sub" to sub,
-                "email" to email,
-                "name" to (email.substringBefore("@")),
-            )
-        } catch (e: Exception) {
-            throw GeneralException(ErrorStatus.SOCIAL_LOGIN_MISSING_FIELD)
-        }
-    }
 }

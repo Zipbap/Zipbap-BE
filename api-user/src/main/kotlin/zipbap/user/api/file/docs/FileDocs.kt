@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import zipbap.user.api.file.dto.PresignedUrlDto
+import zipbap.global.global.auth.resolver.UserInjection
 
 @RequestMapping("/api/files")
 interface FileDocs {
@@ -33,6 +34,7 @@ interface FileDocs {
     )
     @PostMapping("/presigned-url")
     fun generatePresignedUrl(
+        @UserInjection userId: Long,
         @RequestBody request: PresignedUrlDto.PresignedUrlRequest
     ): PresignedUrlDto.PresignedUrlResponse
 }

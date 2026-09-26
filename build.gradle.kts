@@ -20,6 +20,8 @@ allprojects {
 }
 
 subprojects {
+	// Boot also imports its BOM when applied by an application module.
+	extra["testcontainers.version"] = "1.21.4"
 	plugins.withType<JavaPlugin> {
 		extensions.configure<JavaPluginExtension> {
 			toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
@@ -44,6 +46,8 @@ subprojects {
 		imports {
 			mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.5")
 			mavenBom("io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0")
+			// Docker 29 API support; align all Testcontainers modules.
+			mavenBom("org.testcontainers:testcontainers-bom:1.21.4")
 		}
 	}
 }

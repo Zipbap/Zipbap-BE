@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import zipbap.app.global.ApiResponse
-import zipbap.global.domain.user.User
+
 import zipbap.global.global.auth.resolver.UserInjection
 import zipbap.user.api.recipe.dto.RecipeResponseDto
 import zipbap.user.api.recipe.service.RecipeService
@@ -21,15 +21,15 @@ class RecipeTempController(
 ) {
     @GetMapping("/temp")
     fun getMyTempRecipes(
-            @UserInjection user: User
+            @UserInjection user: Long
     ): ApiResponse<List<RecipeResponseDto.TempRecipeSummaryResponseDto>> =
-            ApiResponse.onSuccess(recipeService.getMyTempRecipesV2(user.id!!))
+            ApiResponse.onSuccess(recipeService.getMyTempRecipesV2(user))
 
     @GetMapping
     fun getMyRecipes(
-            @UserInjection user: User
+            @UserInjection user: Long
     ): ApiResponse<List<RecipeResponseDto.RecipeSummaryResponseDto>> =
-            ApiResponse.onSuccess(recipeService.getMyRecipesV2(user.id!!))
+            ApiResponse.onSuccess(recipeService.getMyRecipesV2(user))
 
 
 }

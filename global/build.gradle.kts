@@ -77,7 +77,8 @@ plugins {
 
 
         // 테스트용
-        testImplementation("com.h2database:h2")
+        testImplementation("org.testcontainers:mariadb")
+        testImplementation("org.springframework.security:spring-security-test")
         testImplementation("org.springframework.boot:spring-boot-starter-test")
 
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")

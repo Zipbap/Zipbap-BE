@@ -19,6 +19,9 @@ import zipbap.global.global.code.ErrorReasonDto
 import zipbap.global.global.code.status.ErrorStatus
 import java.util.*
 import java.util.function.Consumer
+import org.springframework.security.core.AuthenticationException
+import org.springframework.security.oauth2.jwt.JwtException as SpringJwtException
+import io.jsonwebtoken.JwtException
 
 @RestControllerAdvice
 class ExceptionAdvice : ResponseEntityExceptionHandler() {
@@ -35,7 +38,8 @@ class ExceptionAdvice : ResponseEntityExceptionHandler() {
                 .findFirst()
                 .orElseThrow { RuntimeException("ConstraintViolationException 추출 도중 에러 발생") }
 
-        return handleExceptionInternalConstraint(e, ErrorStatus.valueOf(errorMessage), HttpHeaders.EMPTY, request)
+        val status = ErrorStatus.entries.firstOrNull { it.name == errorMessage } ?: ErrorStatus.BAD_REQUEST
+        return handleExceptionInternalConstraint(e, status, HttpHeaders.EMPTY, request)
     }
 
 
@@ -64,10 +68,14 @@ class ExceptionAdvice : ResponseEntityExceptionHandler() {
      */
     @ExceptionHandler
     fun exception(e: Exception, request: WebRequest): ResponseEntity<Any>? {
-        e.printStackTrace()
-
-        return handleExceptionInternalFalse(e, ErrorStatus.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, ErrorStatus.INTERNAL_SERVER_ERROR.httpStatus, request, e.message)
+        logger.error("Unhandled request failure", e)
+        return handleExceptionInternalFalse(e, ErrorStatus.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, ErrorStatus.INTERNAL_SERVER_ERROR.httpStatus, request, null)
     }
+
+    @ExceptionHandler(value = [JwtException::class, SpringJwtException::class, AuthenticationException::class])
+    fun authenticationFailure(e: Exception, request: WebRequest): ResponseEntity<Any>? =
+        handleExceptionInternalFalse(e, ErrorStatus.INVALID_TOKEN, HttpHeaders.EMPTY,
+            ErrorStatus.INVALID_TOKEN.httpStatus, request, null)
 
     /**
      * GeneralException이 발생하면 작동하는 메소드입니다.

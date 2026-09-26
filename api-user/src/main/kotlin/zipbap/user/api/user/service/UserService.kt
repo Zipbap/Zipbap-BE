@@ -11,6 +11,8 @@ import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
 import zipbap.user.api.file.service.FileService
 import zipbap.global.domain.user.findByIdOrThrow
+import zipbap.global.global.code.status.ErrorStatus
+import zipbap.global.global.exception.GeneralException
 
 @Service
 @Transactional(readOnly = true)
@@ -25,13 +27,16 @@ class UserService(
 
     /*
         이제 register가 id를 반환할 수 있도록 변경하였습니다. - 2026.03.11
-        현재 같은 email이면 social 구분을 하지 않고 통합 버전으로 이용되도록 로직이 동작합니다.
+        기존 계정과 소셜 제공자가 다르면 이메일만으로 계정을 연결하지 않습니다.
         나중에 관련 기획이 추가되면 변경 고려해야합니ㅏㄷ.
      */
     @Transactional
     fun register(registrationId: String, username: String, email: String): Long {
-        return userRepository.findByEmail(email)?.id ?: run { // 기존 user가 있으면 객체 찾아서 반환 없으면 생성해서 저장 후 반환
-            val social = SocialType.valueOf(registrationId.uppercase())
+        val social = SocialType.valueOf(registrationId.uppercase())
+        return userRepository.findByEmail(email)?.let {
+            if (it.socialType != social) throw GeneralException(ErrorStatus.OAUTH2_LOGIN_FAIL)
+            it.id!!
+        } ?: run {
             val newUser = User(
                 email = email,
                 nickname = username,

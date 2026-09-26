@@ -19,11 +19,10 @@ import zipbap.global.domain.feed.QFeedQueryResult_FeedListRow as QFeedListRow
 import zipbap.global.domain.follow.QFollow
 import zipbap.global.domain.like.QRecipeLike
 import zipbap.global.domain.recipe.QRecipe
-import zipbap.global.domain.recipe.RecipeStatus
+import zipbap.global.domain.recipe.RecipeVisibility
 import zipbap.global.domain.user.QUser
 import zipbap.global.domain.user.User
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -47,9 +46,7 @@ class FeedQueryRepositoryImpl(
         pageable: Pageable,
         keyword: String?
     ): Page<FeedListRow> {
-        val baseVisibility = activeRecipe()
-            .and(recipe.isPrivate.isFalse)
-            .and(authorVisibility(loginUser))
+        val baseVisibility = RecipeVisibility.visibleTo(loginUser?.id, recipe, author)
 
         val filterCondition = when (filter) {
             FeedFilterType.ALL -> null
@@ -183,31 +180,11 @@ class FeedQueryRepositoryImpl(
             .leftJoin(comment).on(comment.recipe.eq(recipe))
             .where(
                 recipe.id.eq(recipeId)
-                    .and(activeRecipe())
-                    .and(recipe.isPrivate.isFalse
-                        .or(loginUserOwns(loginUser))
-                        .or(authorVisibility(loginUser)))
+                    .and(RecipeVisibility.visibleTo(loginUser?.id, recipe, author))
             )
             .groupBy(recipe.id, author.id)
             .fetchOne()
     }
-
-    private fun activeRecipe(): BooleanExpression =
-        recipe.recipeStatus.eq(RecipeStatus.ACTIVE)
-
-    private fun authorVisibility(loginUser: User?): BooleanExpression {
-        val publicAuthor = author.isPrivate.isFalse
-        val followed = if (loginUser != null) {
-            queryFactory.selectOne()
-                .from(follow)
-                .where(follow.follower.eq(loginUser).and(follow.following.eq(author)))
-                .exists()
-        } else Expressions.FALSE
-        return publicAuthor.or(followed).or(loginUserOwns(loginUser))
-    }
-
-    private fun loginUserOwns(loginUser: User?): BooleanExpression =
-        if (loginUser != null) author.id.eq(loginUser.id) else Expressions.FALSE
 
     private fun todayCondition(): BooleanExpression {
         val today = LocalDate.now(KST)

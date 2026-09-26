@@ -97,7 +97,7 @@ class UserServiceTest @Autowired constructor(
         //when
         val id = userService.register(
             email = email,
-            registrationId = "kakao",
+            registrationId = "apple",
             username = "kimsunwoo"
         )
 
@@ -176,7 +176,7 @@ class UserServiceTest @Autowired constructor(
         val savedUser = userRepository.save(UserFixture.create(nickname = "이전 닉네임"))
 
         val fakePresignedUrl = "https://s3.aws.com/fake-image.png"
-        fileRepository.save(FileEntity(fileUrl = fakePresignedUrl, status = FileStatus.UNTRACKED, user = null))
+        fileRepository.save(FileEntity(fileUrl = fakePresignedUrl, status = FileStatus.UNTRACKED, user = null, uploader = savedUser))
 
         val requestDto = UserRequestDto.UserUpdateDto(
             nickname = "새 닉네임",
@@ -220,8 +220,8 @@ class UserServiceTest @Autowired constructor(
         val fakeOldPresignedUrl = "https://s3.aws.com/fake-image.png"
         val fakeNewPresignedUrl = "https://s3.aws.com/new-image.png"
 
-        fileRepository.save(FileEntity(fileUrl = fakeOldPresignedUrl, status = FileStatus.UNTRACKED, user = null))
-        fileRepository.save(FileEntity(fileUrl = fakeNewPresignedUrl, status = FileStatus.UNTRACKED, user = null))
+        fileRepository.save(FileEntity(fileUrl = fakeOldPresignedUrl, status = FileStatus.UNTRACKED, user = null, uploader = savedUser))
+        fileRepository.save(FileEntity(fileUrl = fakeNewPresignedUrl, status = FileStatus.UNTRACKED, user = null, uploader = savedUser))
 
         val oldRequestDto = UserRequestDto.UserUpdateDto(
             nickname = "새 닉네임",
@@ -265,7 +265,7 @@ class UserServiceTest @Autowired constructor(
 
         val fakeOldPresignedUrl = "https://s3.aws.com/fake-image.png"
 
-        fileRepository.save(FileEntity(fileUrl = fakeOldPresignedUrl, status = FileStatus.UNTRACKED, user = null))
+        fileRepository.save(FileEntity(fileUrl = fakeOldPresignedUrl, status = FileStatus.UNTRACKED, user = null, uploader = savedUser))
 
         val oldRequestDto = UserRequestDto.UserUpdateDto(
             nickname = "새 닉네임",

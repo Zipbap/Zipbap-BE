@@ -22,9 +22,9 @@ class BookmarkController(
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
             ApiResponse.onSuccess(bookmarkService.unmarkRecipe(userId, recipeId))
 
-    override fun countBookmarks(recipeId: String
+    override fun countBookmarks(userId: Long, recipeId: String
     ): ApiResponse<BookmarkResponseDto.BookmarkSimpleResponseDto> =
-            ApiResponse.onSuccess(bookmarkService.countBookmarks(recipeId))
+            ApiResponse.onSuccess(bookmarkService.countBookmarks(userId, recipeId))
 
     override fun userRecipes(userId: Long
     ): ApiResponse<List<BookmarkResponseDto.BookmarkRecipeResponseDto>> =

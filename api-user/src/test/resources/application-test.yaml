@@ -1,20 +1,10 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
+    url: jdbc:tc:mariadb:${TEST_MARIADB_TAG:13.0.2}:///zipbap_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
   jpa:
     hibernate:
-      ddl-auto: create-drop
-
-    properties:
-      hibernate:
-        format_sql: true
-        show_sql: true
-        dialect: org.hibernate.dialect.H2Dialect # 이거 없으면 mairaDb dialect를 주입하려해서 H2가 그냥 죽어버림
-
-  h2:
-    console:
-      enabled: true
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true

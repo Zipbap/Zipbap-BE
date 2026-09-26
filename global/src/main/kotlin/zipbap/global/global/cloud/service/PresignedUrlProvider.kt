@@ -52,11 +52,11 @@ class PresignedUrlProvider(
         // Presigned URL 요청 객체 생성
         val presignRequest = PutObjectPresignRequest.builder()
             .signatureDuration(Duration.ofMinutes(expirationMinutes))
-            .putObjectRequest { putObjectRequest }
+            .putObjectRequest(putObjectRequest)
             .build()
 
         // 1) 업로드 URL (S3 PUT 용) 그대로 유지
-        val uploadUrl = s3Presigner.presignPutObject { presignRequest }
+        val uploadUrl = s3Presigner.presignPutObject(presignRequest)
             .url().toString()
 
         // 2) 조회 URL은 CloudFront CDN 도메인으로 생성
