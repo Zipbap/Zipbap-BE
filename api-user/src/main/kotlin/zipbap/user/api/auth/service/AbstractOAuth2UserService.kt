@@ -17,8 +17,6 @@ abstract class AbstractOAuth2UserService(
 
     @Transactional
     fun register(providerUser: ProviderUser, userRequest: OAuth2UserRequest) {
-        if (userService.isUserExists(providerUser.email)) return
-
         val clientRegistration: ClientRegistration = userRequest.clientRegistration
         userService.register(clientRegistration.registrationId, providerUser.username, providerUser.email)
     }

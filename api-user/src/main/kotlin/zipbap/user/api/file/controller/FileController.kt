@@ -12,18 +12,22 @@ import org.springframework.transaction.annotation.Transactional
 @RestController
 class FileController(
         private val presignedUrlProvider: PresignedUrlProvider,
-        private val fileRepository: FileRepository
+        private val fileRepository: FileRepository,
+        private val userRepository: zipbap.global.domain.user.UserRepository
 ) : FileDocs {
 
     @Transactional
     override fun generatePresignedUrl(
+        userId: Long,
         request: PresignedUrlDto.PresignedUrlRequest
     ): PresignedUrlDto.PresignedUrlResponse {
-        val userId = 1L // TODO: JWT 적용 후 SecurityContext에서 추출
+        val uploader = userRepository.findById(userId).orElseThrow {
+            zipbap.global.global.exception.GeneralException(zipbap.global.global.code.status.ErrorStatus.USER_NOT_FOUND)
+        }
         val result = presignedUrlProvider.generateUploadUrl(userId, request.fileName)
 
         // DB에 TEMPORARY_UPLOAD 기록
-        fileRepository.save(FileEntity(fileUrl = result["fileUrl"]!!, status = FileStatus.TEMPORARY_UPLOAD))
+        fileRepository.save(FileEntity(fileUrl = result["fileUrl"]!!, status = FileStatus.TEMPORARY_UPLOAD, uploader = uploader))
 
         return PresignedUrlDto.PresignedUrlResponse(
             uploadUrl = result["uploadUrl"]!!,

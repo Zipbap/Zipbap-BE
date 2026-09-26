@@ -62,11 +62,12 @@ class RecipeService(
 
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
-        val categories = categoryValidator.validateOptional(dto)
+        val categories = categoryValidator.validateOptional(dto, userId)
 
         // 요청에서 사용된 파일 URL 수집
         val usedFileUrls = mutableSetOf<String>()
-        dto.video?.let { usedFileUrls.add(it) }
+        (dto.thumbnail ?: recipe.thumbnail)?.takeIf { it.isNotBlank() }?.let { usedFileUrls.add(it) }
+        (dto.video ?: recipe.video)?.takeIf { it.isNotBlank() }?.let { usedFileUrls.add(it) }
         dto.cookingOrders?.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
         // 파일 상태 업데이트 (임시 저장은 TEMPORARY_UPLOAD 유지)
@@ -120,11 +121,12 @@ class RecipeService(
 
         if (recipe.user.id != userId) throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
 
-        val categories = categoryValidator.validateAll(dto, strict = true)
+        val categories = categoryValidator.validateAll(dto, strict = true, userId = userId)
 
         // 요청에서 사용된 파일 URL 수집
         val usedFileUrls = mutableSetOf<String>()
-        dto.video?.let { usedFileUrls.add(it) }
+        dto.thumbnail.takeIf { it.isNotBlank() }?.let { usedFileUrls.add(it) }
+        dto.video?.takeIf { it.isNotBlank() }?.let { usedFileUrls.add(it) }
         dto.cookingOrders.forEach { order -> order.image?.let { usedFileUrls.add(it) } }
 
         // 파일 상태 업데이트 (최종 저장은 FINALIZED 처리)

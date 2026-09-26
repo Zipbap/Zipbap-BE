@@ -7,7 +7,12 @@ on:
   workflow_call:
 
 jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+    with:
+      report-prefix: api-admin
   build:
+    needs: verify
     runs-on: ubuntu-latest
     if: |
       github.repository == 'Zipbap/Zipbap-BE' &&

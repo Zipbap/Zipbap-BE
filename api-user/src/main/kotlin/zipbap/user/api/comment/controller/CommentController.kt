@@ -22,9 +22,10 @@ class CommentController(
         ApiResponse.onSuccess(commentService.createComment(userId, dto))
 
     override fun getComments(
+        @UserInjection userId: Long,
         @RequestParam recipeId: String
     ): ApiResponse<List<CommentResponseDto.CommentDetailResponseDto>> =
-        ApiResponse.onSuccess(commentService.getComments(recipeId))
+        ApiResponse.onSuccess(commentService.getComments(userId, recipeId))
 
     override fun updateComment(
             @UserInjection userId: Long,

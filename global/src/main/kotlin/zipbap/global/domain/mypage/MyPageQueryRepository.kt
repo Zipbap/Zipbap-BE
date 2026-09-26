@@ -12,6 +12,7 @@ import zipbap.global.domain.bookmark.QBookmark
 import zipbap.global.domain.follow.QFollow
 import zipbap.global.domain.recipe.QRecipe
 import zipbap.global.domain.recipe.RecipeStatus
+import zipbap.global.domain.recipe.RecipeVisibility
 import zipbap.global.domain.user.QUser
 
 @Repository
@@ -68,7 +69,7 @@ class MyPageQueryRepository(
         val where = BooleanBuilder().apply {
             and(b.user.id.eq(ownerId))
             and(b.deletedAt.isNull)
-            and(r.isPrivate.isFalse) // 게시자가 피드에서 비공개로 전환시 조회불가
+            and(RecipeVisibility.visibleTo(ownerId, r))
             and(r.deletedAt.isNull)
         }
 
@@ -97,13 +98,12 @@ class MyPageQueryRepository(
         return PageImpl(content, pageable, total)
     }
 
-    fun loadFeedCards(ownerId: Long, pageable: Pageable): Page<MyPageQueryResult.RecipeCard> {
+    fun loadFeedCards(ownerId: Long, viewerId: Long, pageable: Pageable): Page<MyPageQueryResult.RecipeCard> {
         val r = QRecipe.recipe
 
         val where = BooleanBuilder().apply {
             and(r.user.id.eq(ownerId))
-            and(r.recipeStatus.eq(RecipeStatus.ACTIVE))
-            and(r.isPrivate.isFalse)
+            and(RecipeVisibility.visibleTo(viewerId, r))
             and(r.deletedAt.isNull)
         }
 

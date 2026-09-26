@@ -18,7 +18,7 @@ import zipbap.global.global.util.CustomIdGenerator
 @Transactional(readOnly = true)
 class BookmarkService(
         private val bookmarkRepository: BookmarkRepository,
-        private val recipeRepository: RecipeRepository,
+        private val recipeRepository: zipbap.global.domain.recipe.RecipeAccessRepository,
         private val userRepository: UserRepository
 ) {
 
@@ -29,8 +29,7 @@ class BookmarkService(
     @Transactional
     fun markRecipe(userId: Long, recipeId: String
     ): BookmarkResponseDto.BookmarkSimpleResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.requireVisible(recipeId, userId)
         val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
@@ -59,8 +58,7 @@ class BookmarkService(
     @Transactional
     fun unmarkRecipe(userId: Long, recipeId: String
     ): BookmarkResponseDto.BookmarkSimpleResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.requireVisible(recipeId, userId)
         val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
@@ -80,9 +78,8 @@ class BookmarkService(
     /**
      * 레시피의 북마크 수를 반환한다.
      */
-    fun countBookmarks(recipeId: String): BookmarkResponseDto.BookmarkSimpleResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-                .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+    fun countBookmarks(userId: Long, recipeId: String): BookmarkResponseDto.BookmarkSimpleResponseDto {
+        val recipe = recipeRepository.requireVisible(recipeId, userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)
@@ -94,9 +91,9 @@ class BookmarkService(
     }
 
     fun getMarkedRecipe(userId: Long): List<BookmarkResponseDto.BookmarkRecipeResponseDto> {
-        val recipes = bookmarkRepository.findByUser(userId, RecipeStatus.ACTIVE)
+        val recipes = recipeRepository.findVisibleBookmarks(userId)
                 .map {
-                    BookmarkConverter.toThumbnailDto(it.recipe)
+                    BookmarkConverter.toThumbnailDto(it)
                 } .toList()
 
         return recipes

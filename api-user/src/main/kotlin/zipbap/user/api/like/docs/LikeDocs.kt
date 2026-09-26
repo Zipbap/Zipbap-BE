@@ -55,7 +55,7 @@ interface LikeDocs {
         )
     )
     @GetMapping("/count")
-    fun countLikes(
+    fun countLikes(@zipbap.global.global.auth.resolver.UserInjection userId: Long,
         @Parameter(description = "레시피 ID", example = "RC-1-00001")
         @PathVariable recipeId: String
     ): ApiResponse<LikeResponseDto>

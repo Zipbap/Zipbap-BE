@@ -14,7 +14,7 @@ import zipbap.global.global.code.status.ErrorStatus
 @Service
 class LikeService(
         private val recipeLikeRepository: RecipeLikeRepository,
-        private val recipeRepository: RecipeRepository, private val userRepository: UserRepository
+        private val recipeRepository: zipbap.global.domain.recipe.RecipeAccessRepository, private val userRepository: UserRepository
 ) {
 
     /**
@@ -27,8 +27,7 @@ class LikeService(
      */
     @Transactional
     fun likeRecipe(userId: Long, recipeId: String): LikeResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.requireVisible(recipeId, userId)
         val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
@@ -54,8 +53,7 @@ class LikeService(
      */
     @Transactional
     fun unlikeRecipe(userId: Long, recipeId: String): LikeResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.requireVisible(recipeId, userId)
         val userRef = userRepository.getReferenceById(userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
@@ -79,9 +77,8 @@ class LikeService(
      * @return 레시피 ID와 현재 좋아요 수
      */
     @Transactional(readOnly = true)
-    fun countLikes(recipeId: String): LikeResponseDto {
-        val recipe = recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+    fun countLikes(userId: Long, recipeId: String): LikeResponseDto {
+        val recipe = recipeRepository.requireVisible(recipeId, userId)
 
         if (recipe.recipeStatus != RecipeStatus.ACTIVE) {
             throw GeneralException(ErrorStatus.RECIPE_FORBIDDEN)

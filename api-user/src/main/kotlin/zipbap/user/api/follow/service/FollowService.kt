@@ -18,7 +18,8 @@ class FollowService(
         private val userRepository: UserRepository
 ) {
     @Transactional
-    fun follow(follower: User, followingId: Long): FollowResponseDto.FollowCountDto {
+    fun follow(followerId: Long, followingId: Long): FollowResponseDto.FollowCountDto {
+        val follower = userRepository.findById(followerId).orElseThrow { GeneralException(ErrorStatus.USER_NOT_FOUND) }
         val followingUser = userRepository.findById(followingId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
@@ -36,7 +37,8 @@ class FollowService(
     }
 
     @Transactional
-    fun unfollow(unfollower: User, unfollowingId: Long): FollowResponseDto.FollowCountDto {
+    fun unfollow(unfollowerId: Long, unfollowingId: Long): FollowResponseDto.FollowCountDto {
+        val unfollower = userRepository.findById(unfollowerId).orElseThrow { GeneralException(ErrorStatus.USER_NOT_FOUND) }
         val unfollowingUser = userRepository.findById(unfollowingId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
@@ -56,7 +58,8 @@ class FollowService(
     /**
      * user가 userId의 팔로워인지 확인하고, userId의 팔로워 및 팔로잉 수를 조회합니다.
      */
-    fun count(user: User, userId: Long): FollowResponseDto.FollowCountDto {
+    fun count(viewerId: Long, userId: Long): FollowResponseDto.FollowCountDto {
+        val user = userRepository.findById(viewerId).orElseThrow { GeneralException(ErrorStatus.USER_NOT_FOUND) }
         val foundUser = userRepository.findById(userId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
@@ -72,13 +75,14 @@ class FollowService(
      * 현재 조회하는 유저를 기준으로 팔로잉 여부도 같이 반환합니다.
      * 특정 유저가 팔로잉 한다 -> following.follower에 저장되어있다
      */
-    fun followingList(user: User, followingCheckUserId: Long,
+    fun followingList(viewerId: Long, followingCheckUserId: Long,
                       condition: String?): List<FollowResponseDto.FollowUserDto> {
         val followingTargetUser = userRepository.findById(followingCheckUserId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
         val targetFollowing = followRepository.searchFollowingList(followingCheckUserId, condition)
+        val user = userRepository.findById(viewerId).orElseThrow { GeneralException(ErrorStatus.USER_NOT_FOUND) }
         val userFollowing = followRepository.findByFollower(user)
 
         val userSet = userFollowing.mapNotNull {
@@ -98,13 +102,14 @@ class FollowService(
      * 현재 조회하는 유저를 기준으로 팔로잉 여부도 같이 반환합니다.
      * 특정 유저가 팔로워의 팔로워를 조회하고싶다 -> following.following에 저장되어있다
      */
-    fun followerList(user: User, followerCheckUserId: Long,
+    fun followerList(viewerId: Long, followerCheckUserId: Long,
                      condition: String?): List<FollowResponseDto.FollowUserDto> {
         val followerTargetUser = userRepository.findById(followerCheckUserId).orElseThrow {
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
         val targetFollower = followRepository.searchFollowerList(followerCheckUserId, condition)
+        val user = userRepository.findById(viewerId).orElseThrow { GeneralException(ErrorStatus.USER_NOT_FOUND) }
         val userFollowing = followRepository.findByFollower(user)
 
         val userSet = userFollowing.mapNotNull {

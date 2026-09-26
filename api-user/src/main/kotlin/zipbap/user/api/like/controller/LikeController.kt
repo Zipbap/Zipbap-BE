@@ -20,6 +20,6 @@ class LikeController(
     override fun unlikeRecipe(@UserInjection userId: Long, @PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
         ApiResponse.onSuccess(likeService.unlikeRecipe(userId, recipeId))
 
-    override fun countLikes(@PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
-        ApiResponse.onSuccess(likeService.countLikes(recipeId))
+    override fun countLikes(@UserInjection userId: Long, @PathVariable recipeId: String): ApiResponse<LikeResponseDto> =
+        ApiResponse.onSuccess(likeService.countLikes(userId, recipeId))
 }

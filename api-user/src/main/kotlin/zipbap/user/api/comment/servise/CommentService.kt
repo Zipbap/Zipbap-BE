@@ -15,7 +15,7 @@ import zipbap.global.global.code.status.ErrorStatus
 @Service
 class CommentService(
         private val commentRepository: CommentRepository,
-        private val recipeRepository: RecipeRepository,
+        private val recipeRepository: zipbap.global.domain.recipe.RecipeAccessRepository,
         private val userRepository: UserRepository
 ) {
 
@@ -24,14 +24,14 @@ class CommentService(
      */
     @Transactional
     fun createComment(userId: Long, dto: CommentRequestDto.CreateCommentRequestDto): CommentResponseDto.CommentDetailResponseDto {
-        val recipe = recipeRepository.findById(dto.recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+        val recipe = recipeRepository.requireVisible(dto.recipeId, userId)
         val userRef = userRepository.getReferenceById(userId)
 
         val parent: Comment? = dto.parentId?.let {
             commentRepository.findById(it)
                 .orElseThrow { GeneralException(ErrorStatus.COMMENT_NOT_FOUND) }
         }
+        if (parent != null && parent.recipe.id != recipe.id) throw GeneralException(ErrorStatus.COMMENT_NOT_FOUND)
 
         val comment = commentRepository.save(CommentConverter.toEntity(dto, userRef, recipe, parent))
         return CommentResponseDto.CommentDetailResponseDto.from(comment)
@@ -43,16 +43,16 @@ class CommentService(
      * DTO 변환 과에서 User 사용하므로 user fetch join도 필요합니다.
      */
     @Transactional(readOnly = true)
-    fun getComments(recipeId: String): List<CommentResponseDto.CommentDetailResponseDto> {
-        recipeRepository.findById(recipeId)
-            .orElseThrow { GeneralException(ErrorStatus.RECIPE_NOT_FOUND) }
+    fun getComments(userId: Long, recipeId: String): List<CommentResponseDto.CommentDetailResponseDto> {
+        recipeRepository.requireVisible(recipeId, userId)
 
         val rootComments = commentRepository.findAllByRecipeIdAndParentIsNull(recipeId)
         return rootComments.map { mapToDtoWithChildren(it) }
     }
 
     private fun mapToDtoWithChildren(comment: Comment): CommentResponseDto.CommentDetailResponseDto {
-        val childrenDtos = comment.children.map { mapToDtoWithChildren(it) }
+        // Ignore invalid legacy cross-recipe links; new links are rejected at creation.
+        val childrenDtos = comment.children.filter { it.recipe.id == comment.recipe.id }.map { mapToDtoWithChildren(it) }
         return CommentResponseDto.CommentDetailResponseDto.from(comment, childrenDtos)
     }
 

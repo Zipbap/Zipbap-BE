@@ -23,7 +23,7 @@ class MyPageService(
             ownerId: Long,
             pageable: Pageable) : MyPageResponseDto.MyPageViewDto {
         if (ownerId != viewerId) {
-            throw GeneralException(ErrorStatus.UNAUTHORIZED) // 저장된 Bookmark는 자기 자신만 볼 수 있다.
+            throw GeneralException(ErrorStatus.FORBIDDEN) // 저장된 Bookmark는 자기 자신만 볼 수 있다.
         }
 
         val feedCards = myPageQueryRepository.loadBookmarkCards(ownerId, pageable)
@@ -40,7 +40,7 @@ class MyPageService(
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
-        val feedCards = myPageQueryRepository.loadFeedCards(ownerId, pageable)
+        val feedCards = myPageQueryRepository.loadFeedCards(ownerId, viewerId, pageable)
         val profileBlock = myPageQueryRepository.loadProfileBlock(ownerId, viewerId)
 
         val isOwner = (viewerId== ownerId)

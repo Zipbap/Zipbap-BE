@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 import zipbap.global.global.auth.resolver.UserInjection
 import zipbap.user.api.follow.dto.FollowResponseDto
-import zipbap.global.domain.user.User
+
 import zipbap.app.global.ApiResponse
 
 @RequestMapping("/api/follows")
@@ -52,7 +52,7 @@ followingId 유저를 팔로우 합니다.
     )
     @PostMapping("/{followingId}")
     fun followUser(
-            @UserInjection viewer: User,
+            @UserInjection viewer: Long,
             @PathVariable followingId: Long
     ): ApiResponse<FollowResponseDto.FollowCountDto>
 
@@ -91,7 +91,7 @@ followingId 유저를 언팔로우 합니다.
     )
     @DeleteMapping("/{unfollowingId}")
     fun unfollowUser(
-            @UserInjection user: User,
+            @UserInjection user: Long,
             @PathVariable unfollowingId: Long
     ): ApiResponse<FollowResponseDto.FollowCountDto>
 
@@ -130,7 +130,7 @@ userId 유저의 팔로워, 팔로잉 수, viewer의 팔로잉 여부를 조회�
     )
     @GetMapping("/{userId}/count")
     fun countFollow(
-            @UserInjection user: User,
+            @UserInjection user: Long,
             @PathVariable userId: Long
     ): ApiResponse<FollowResponseDto.FollowCountDto>
 
@@ -172,7 +172,7 @@ userId의 팔로잉 목록을 조회합니다.
     )
     @GetMapping("/{userId}/following-list")
     fun getFollowingList(
-            @UserInjection user: User,
+            @UserInjection user: Long,
             @PathVariable userId: Long,
             @RequestParam(required = false) condition: String?
     ): ApiResponse<List<FollowResponseDto.FollowUserDto>>
@@ -215,7 +215,7 @@ userId의 팔로워 목록을 조회합니다.
     )
     @GetMapping("/{userId}/follower-list")
     fun getFollowerList(
-            @UserInjection user: User,
+            @UserInjection user: Long,
             @PathVariable userId: Long,
             @RequestParam(required = false) condition: String?):
             ApiResponse<List<FollowResponseDto.FollowUserDto>>

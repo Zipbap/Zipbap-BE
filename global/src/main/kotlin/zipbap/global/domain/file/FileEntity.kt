@@ -28,5 +28,9 @@ class FileEntity(
     var user: User? = null,
 
         @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null
+    val id: Long? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploader_id", updatable = false)
+    val uploader: User? = null
 ) : BaseEntity()
