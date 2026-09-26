@@ -16,7 +16,7 @@ class SwaggerConfig {
     @Bean
     fun openAPI(): OpenAPI {
         return OpenAPI()
-            .addServersItem(Server().url("http://localhost:8080")) // local용
+            .addServersItem(Server().url("http://localhost:9090")) // local용
             .addServersItem(Server().url("https://zipbap.store")) // 배포 서버용
             /*
                 이전 프로젝트에서 ssl 연동시, www 없는 API는 스웨거 사용이 안되는 문제가 있어서
