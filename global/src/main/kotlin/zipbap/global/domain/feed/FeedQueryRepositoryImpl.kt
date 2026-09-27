@@ -76,6 +76,8 @@ class FeedQueryRepositoryImpl(
             FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.id.count().desc(), recipe.createdAt.desc())
             else -> orderSpecifiers += arrayOf(recipe.createdAt.desc())
         }
+        // A unique final key keeps ties stable across OFFSET page boundaries on unchanged data.
+        orderSpecifiers += recipe.id.desc()
 
         // Rank over every visible candidate before LIMIT. Join only the relation used for ranking.
         val pageQuery = queryFactory

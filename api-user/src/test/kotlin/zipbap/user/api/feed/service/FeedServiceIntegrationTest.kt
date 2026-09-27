@@ -345,6 +345,32 @@ class FeedServiceIntegrationTest @Autowired constructor(
         assertThat(statistics.entityLoadCount).isZero()
     }
 
+    @ParameterizedTest
+    @EnumSource(FeedFilterType::class)
+    fun `tied page boundaries have stable ordering without duplicates or omissions`(filter: FeedFilterType) {
+        jdbc.update("UPDATE recipe SET created_at = ?", LocalDateTime.of(2026, 9, 26, 12, 0))
+        val expected = (1..52).sortedWith(
+            compareByDescending<Int> {
+                when (filter) {
+                    FeedFilterType.HOT -> if (it % 2 == 0) 2 else 1
+                    FeedFilterType.RECOMMEND -> if (it % 3 == 0) 2 else 1
+                    else -> 0
+                }
+            }.thenByDescending { recipeId(it) }
+        ).map(::recipeId)
+
+        val actual = (0..2).flatMap { number ->
+            resetMeasurement()
+            val page = feedService.getFeedList(viewerId, filter, PageRequest.of(number, 20), null)
+            assertThat(statistics.prepareStatementCount).isEqualTo(queryCount(filter))
+            assertThat(page.totalElements).isEqualTo(52L)
+            page.content.map { it.recipeId }
+        }
+
+        assertThat(actual).containsExactlyElementsOf(expected)
+        assertThat(actual).doesNotHaveDuplicates()
+    }
+
     // The frozen pre-C query plus A's per-item lookups form an independent regression oracle.
     private fun previousFeedList(filter: FeedFilterType, pageable: PageRequest, keyword: String?) =
         userRepository.findById(viewerId).orElseThrow().let { user ->
