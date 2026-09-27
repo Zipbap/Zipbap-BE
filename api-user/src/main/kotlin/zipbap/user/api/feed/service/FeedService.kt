@@ -3,6 +3,7 @@ package zipbap.user.api.feed.service
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -34,6 +35,9 @@ class FeedService(
         private val recipeLikeRepository: RecipeLikeRepository,
         private val publisher: ApplicationEventPublisher, private val userRepository: UserRepository
 ) {
+    private companion object {
+        const val MAX_FEED_PAGE_SIZE = 50
+    }
 
     /**
      * Feed는 삭제 가능성이 있으므로 user -> userId로 인한 변경을 최소화 하여 돌아갈 정도만 수정
@@ -48,7 +52,14 @@ class FeedService(
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
-        val page = feedQueryRepository.findFeed(loginUser, filter, pageable, condition)
+        // Bound both the page query and subsequent IN queries, including non-HTTP callers.
+        val effectivePageable = when {
+            pageable.isUnpaged -> PageRequest.of(0, MAX_FEED_PAGE_SIZE)
+            pageable.pageSize > MAX_FEED_PAGE_SIZE ->
+                PageRequest.of(pageable.pageNumber, MAX_FEED_PAGE_SIZE, pageable.sort)
+            else -> pageable
+        }
+        val page = feedQueryRepository.findFeed(loginUser, filter, effectivePageable, condition)
         val recipeIds = page.content.mapNotNull { it.recipeId }.distinct()
         val likedRecipeIds = if (recipeIds.isEmpty()) emptySet() else
             recipeLikeRepository.findRecipeIdsByUserIdAndRecipeIdIn(loginUserId, recipeIds).toSet()
@@ -61,7 +72,7 @@ class FeedService(
             FeedConverter.toFeedItemDto(row)
         }
 
-        return PageImpl(content, pageable, page.totalElements)
+        return PageImpl(content, effectivePageable, page.totalElements)
     }
 
     fun getFeedDetail(

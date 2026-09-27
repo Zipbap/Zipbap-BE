@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestPropertySource
 import support.FeedTestClockConfiguration
@@ -369,6 +370,37 @@ class FeedServiceIntegrationTest @Autowired constructor(
 
         assertThat(actual).containsExactlyElementsOf(expected)
         assertThat(actual).doesNotHaveDuplicates()
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [50, 51, 5000])
+    fun `feed size is capped before querying and reflected in page metadata`(requestedSize: Int) {
+        val first = feedService.getFeedList(viewerId, FeedFilterType.ALL, PageRequest.of(0, requestedSize), null)
+
+        assertThat(statistics.prepareStatementCount).isEqualTo(8L)
+        assertThat(first.content.map { it.recipeId }).containsExactlyElementsOf((1..50).map(::recipeId))
+        assertThat(first.size).isEqualTo(50)
+        assertThat(first.totalElements).isEqualTo(52L)
+        assertThat(first.totalPages).isEqualTo(2)
+
+        resetMeasurement()
+        val next = feedService.getFeedList(viewerId, FeedFilterType.ALL, PageRequest.of(1, requestedSize), null)
+        assertThat(next.content.map { it.recipeId }).containsExactly(recipeId(51), recipeId(52))
+        assertThat(next.size).isEqualTo(50)
+        assertThat(next.number).isEqualTo(1)
+        assertThat(next.pageable.offset).isEqualTo(50L)
+        assertThat(next.isLast).isTrue()
+    }
+
+    @Test
+    fun `unpaged internal calls are bounded as well`() {
+        val page = feedService.getFeedList(viewerId, FeedFilterType.ALL, Pageable.unpaged(), null)
+
+        assertThat(page.size).isEqualTo(50)
+        assertThat(page.number).isZero()
+        assertThat(page.content).hasSize(50)
+        assertThat(page.totalElements).isEqualTo(52L)
+        assertThat(statistics.prepareStatementCount).isEqualTo(8L)
     }
 
     // The frozen pre-C query plus A's per-item lookups form an independent regression oracle.
