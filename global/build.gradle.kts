@@ -52,6 +52,7 @@ plugins {
         // Querydsl (APT는 여기서!)
         val querydslVersion = "7.1"
         implementation("io.github.openfeign.querydsl:querydsl-jpa:$querydslVersion")
+        testFixturesImplementation("io.github.openfeign.querydsl:querydsl-jpa:$querydslVersion")
         ksp("io.github.openfeign.querydsl:querydsl-ksp-codegen:$querydslVersion")
 
         // Swagger/OpenAPI (springdoc 2.x, Spring Boot 3.x 호환)

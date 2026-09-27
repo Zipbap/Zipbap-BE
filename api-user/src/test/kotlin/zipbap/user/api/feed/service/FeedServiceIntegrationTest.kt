@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestPropertySource
 import support.FeedTestClockConfiguration
+import support.query.LegacyFeedListQuery
 import support.annotation.IntegrationTest
 import support.fixture.RecipeFixture
 import support.fixture.UserFixture
@@ -45,7 +46,6 @@ import java.time.ZoneId
 ])
 class FeedServiceIntegrationTest @Autowired constructor(
     private val feedService: FeedService,
-    private val feedQueryRepository: FeedQueryRepositoryImpl,
     private val recipeRepository: RecipeRepository,
     private val userRepository: UserRepository,
     private val recipeLikeRepository: RecipeLikeRepository,
@@ -93,12 +93,12 @@ class FeedServiceIntegrationTest @Autowired constructor(
         resetMeasurement()
     }
 
-    @ParameterizedTest(name = "size={0}: SQL stays at 5 and personalization remains correct")
+    @ParameterizedTest(name = "size={0}: SQL stays at 8 and personalization remains correct")
     @ValueSource(ints = [10, 20, 30])
     fun `page size does not increase query count`(size: Int) {
         val page = feedService.getFeedList(viewerId, FeedFilterType.ALL, PageRequest.of(0, size), null)
 
-        assertThat(statistics.prepareStatementCount).isEqualTo(5L)
+        assertThat(statistics.prepareStatementCount).isEqualTo(8L)
         // Scalar projections must not materialize Recipe, RecipeLike, or Bookmark entities.
         assertThat(statistics.entityLoadCount).isEqualTo(1L)
         assertThat(page.totalElements).isEqualTo(52L)
@@ -125,7 +125,7 @@ class FeedServiceIntegrationTest @Autowired constructor(
 
         val actual = feedService.getFeedList(viewerId, filter, pageable, null)
 
-        assertThat(statistics.prepareStatementCount).isEqualTo(5L)
+        assertThat(statistics.prepareStatementCount).isEqualTo(queryCount(filter))
         assertThat(actual).isEqualTo(expected)
     }
 
@@ -138,7 +138,7 @@ class FeedServiceIntegrationTest @Autowired constructor(
 
         val actual = feedService.getFeedList(viewerId, FeedFilterType.ALL, pageable, "recipe-1")
 
-        assertThat(statistics.prepareStatementCount).isEqualTo(5L)
+        assertThat(statistics.prepareStatementCount).isEqualTo(8L)
         assertThat(actual).isEqualTo(expected)
     }
 
@@ -146,7 +146,7 @@ class FeedServiceIntegrationTest @Autowired constructor(
     fun `another user's actions do not leak into viewer flags`() {
         val page = feedService.getFeedList(authorId, FeedFilterType.ALL, PageRequest.of(0, 20), null)
 
-        assertThat(statistics.prepareStatementCount).isEqualTo(5L)
+        assertThat(statistics.prepareStatementCount).isEqualTo(8L)
         assertThat(page.content).hasSize(20)
         assertThat(page.content).allSatisfy { item ->
             assertThat(item.isLiked).isFalse()
@@ -157,10 +157,10 @@ class FeedServiceIntegrationTest @Autowired constructor(
     }
 
     @Test
-    fun `last partial page uses five queries and preserves total`() {
+    fun `last partial page uses eight queries and preserves total`() {
         val page = feedService.getFeedList(viewerId, FeedFilterType.ALL, PageRequest.of(5, 10), null)
 
-        assertThat(statistics.prepareStatementCount).isEqualTo(5L)
+        assertThat(statistics.prepareStatementCount).isEqualTo(8L)
         assertThat(page.content.map { it.recipeId }).containsExactly(recipeId(51), recipeId(52))
         assertThat(page.content.map { it.isLiked }).containsExactly(false, true)
         assertThat(page.content.map { it.isBookmarked }).containsExactly(true, false)
@@ -204,6 +204,135 @@ class FeedServiceIntegrationTest @Autowired constructor(
         assertThat(page.totalElements).isEqualTo(2L)
     }
 
+    @ParameterizedTest
+    @EnumSource(value = FeedFilterType::class, names = ["HOT", "RECOMMEND"])
+    fun `ranking includes an old popular recipe outside the latest page`(filter: FeedFilterType) {
+        val oldRecipe = recipeRepository.findById(recipeId(52)).orElseThrow()
+        repeat(3) { index ->
+            val fan = UserFixture.create().also(em::persist)
+            em.persist(RecipeLike(user = fan, recipe = oldRecipe))
+            em.persist(Bookmark(user = fan, recipe = oldRecipe, id = "BM-rank-$index"))
+        }
+        em.flush()
+        resetMeasurement()
+        val pageable = PageRequest.of(0, 20)
+        val expected = previousFeedList(filter, pageable, null)
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, filter, pageable, null)
+
+        assertThat(statistics.prepareStatementCount).isEqualTo(7L)
+        assertThat(page).isEqualTo(expected)
+        assertThat(page.content.first().recipeId).isEqualTo(recipeId(52))
+        assertThat(page.content.first().likeCount).isEqualTo(5L)
+        assertThat(page.content.first().bookmarkCount).isEqualTo(4L)
+    }
+
+    @ParameterizedTest
+    @EnumSource(FeedFilterType::class)
+    fun `missing aggregates default to zero including ranking left joins`(filter: FeedFilterType) {
+        listOf("recipe_like", "bookmark", "comment").forEach { table ->
+            jdbc.update("DELETE FROM $table WHERE recipe_id = ?", recipeId(1))
+        }
+        jdbc.update("UPDATE recipe SET title = ? WHERE id = ?", "zero-activity", recipeId(1))
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, filter, PageRequest.of(0, 20), "zero-activity")
+
+        assertThat(statistics.prepareStatementCount).isEqualTo(queryCount(filter))
+        val item = page.content.single()
+        assertThat(item.likeCount).isZero()
+        assertThat(item.bookmarkCount).isZero()
+        assertThat(item.commentCount).isZero()
+        assertThat(item.isLiked).isFalse()
+        assertThat(item.isBookmarked).isFalse()
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = FeedFilterType::class, names = ["ALL", "HOT", "RECOMMEND"])
+    fun `search field priority precedes popularity and recency`(filter: FeedFilterType) {
+        jdbc.update("UPDATE recipe SET ingredient_info = ? WHERE id = ?", "priority-needle", recipeId(1))
+        jdbc.update("UPDATE recipe SET subtitle = ? WHERE id = ?", "priority-needle", recipeId(2))
+        jdbc.update("UPDATE recipe SET title = ? WHERE id = ?", "priority-needle", recipeId(51))
+        resetMeasurement()
+        val pageable = PageRequest.of(0, 20)
+        val expected = previousFeedList(filter, pageable, "  PRIORITY-NEEDLE  ")
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, filter, pageable, "  PRIORITY-NEEDLE  ")
+
+        assertThat(page).isEqualTo(expected)
+        assertThat(page.content.map { it.recipeId }).containsExactly(recipeId(51), recipeId(2), recipeId(1))
+    }
+
+    @Test
+    fun `reply and soft deleted activity counts retain the existing contract`() {
+        val recipe = recipeRepository.findById(recipeId(1)).orElseThrow()
+        val viewer = userRepository.findById(viewerId).orElseThrow()
+        val parent = em.createQuery("select c from Comment c where c.recipe.id = :id", Comment::class.java)
+            .setParameter("id", recipe.id).resultList.first()
+        em.persist(Comment(user = viewer, recipe = recipe, content = "reply", parent = parent))
+        em.flush()
+        listOf("recipe_like", "bookmark", "comment").forEach { table ->
+            jdbc.update("UPDATE $table SET deleted_at = ? WHERE recipe_id = ?", LocalDateTime.of(2026, 9, 26, 12, 0), recipe.id)
+        }
+        resetMeasurement()
+        val pageable = PageRequest.of(0, 10)
+        val expected = previousFeedList(FeedFilterType.ALL, pageable, null)
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, FeedFilterType.ALL, pageable, null)
+
+        assertThat(page).isEqualTo(expected)
+        assertThat(page.content.first().commentCount).isEqualTo(3L)
+        assertThat(page.content.first().likeCount).isEqualTo(1L)
+        assertThat(page.content.first().bookmarkCount).isEqualTo(1L)
+    }
+
+    @ParameterizedTest
+    @EnumSource(FeedFilterType::class)
+    fun `category eligibility is applied before pagination without changing legacy totals`(filter: FeedFilterType) {
+        jdbc.update("UPDATE recipe SET category_cooking_time_id = NULL WHERE id = ?", recipeId(1))
+        jdbc.update("UPDATE recipe SET category_level_id = NULL WHERE id = ?", recipeId(2))
+        resetMeasurement()
+        val pageable = PageRequest.of(0, 20)
+        val expected = previousFeedList(filter, pageable, null)
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, filter, pageable, null)
+
+        assertThat(page).isEqualTo(expected)
+        assertThat(page.content).hasSize(20)
+        assertThat(page.content.map { it.recipeId }).doesNotContain(recipeId(1), recipeId(2))
+        assertThat(page.totalElements).isEqualTo(52L)
+    }
+
+    @ParameterizedTest
+    @EnumSource(FeedFilterType::class)
+    fun `visibility and status restrictions also apply to ranking candidates`(filter: FeedFilterType) {
+        jdbc.update("UPDATE recipe SET is_private = TRUE WHERE id = ?", recipeId(1))
+        jdbc.update("UPDATE recipe SET deleted_at = ? WHERE id = ?", LocalDateTime.of(2026, 9, 26, 12, 0), recipeId(2))
+        jdbc.update("UPDATE recipe SET recipe_status = 'TEMPORARY' WHERE id = ?", recipeId(3))
+        jdbc.update("UPDATE users SET is_private = TRUE WHERE id = ?", authorId)
+        resetMeasurement()
+        val pageable = PageRequest.of(0, 20)
+        val expected = previousFeedList(filter, pageable, null)
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, filter, pageable, null)
+
+        assertThat(page).isEqualTo(expected)
+        assertThat(page.totalElements).isEqualTo(49L)
+        assertThat(page.content.map { it.recipeId }).doesNotContain(recipeId(1), recipeId(2), recipeId(3))
+        // Without the follow, none of this private author's posts are visible to the viewer.
+        jdbc.update("DELETE FROM follow WHERE follower = ? AND following = ?", viewerId, authorId)
+        resetMeasurement()
+        val hidden = feedService.getFeedList(viewerId, filter, pageable, null)
+        assertThat(hidden.content).isEmpty()
+        assertThat(hidden.totalElements).isZero()
+        assertThat(statistics.prepareStatementCount).isEqualTo(3L)
+    }
+
     @Test
     fun `bulk repositories return only requested IDs without loading entities`() {
         val ids = listOf(recipeId(1), recipeId(2), recipeId(3), "RC-missing")
@@ -216,10 +345,10 @@ class FeedServiceIntegrationTest @Autowired constructor(
         assertThat(statistics.entityLoadCount).isZero()
     }
 
-    // A's per-item lookup path is retained only as a regression oracle on the same database.
+    // The frozen pre-C query plus A's per-item lookups form an independent regression oracle.
     private fun previousFeedList(filter: FeedFilterType, pageable: PageRequest, keyword: String?) =
         userRepository.findById(viewerId).orElseThrow().let { user ->
-            val page = feedQueryRepository.findFeed(user, filter, pageable, keyword)
+            val page = LegacyFeedListQuery(em, clock).findFeed(user, filter, pageable, keyword)
             val content = page.content.map { row ->
                 val recipe = recipeRepository.findById(row.recipeId!!).orElseThrow()
                 row.isLiked = recipeLikeRepository.existsByUserAndRecipe(user, recipe)
@@ -235,4 +364,7 @@ class FeedServiceIntegrationTest @Autowired constructor(
     }
 
     private fun recipeId(index: Int) = "RC-feed-B-$index"
+
+    private fun queryCount(filter: FeedFilterType) =
+        if (filter == FeedFilterType.HOT || filter == FeedFilterType.RECOMMEND) 7L else 8L
 }
