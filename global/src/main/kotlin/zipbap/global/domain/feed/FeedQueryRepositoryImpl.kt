@@ -22,13 +22,14 @@ import zipbap.global.domain.recipe.QRecipe
 import zipbap.global.domain.recipe.RecipeVisibility
 import zipbap.global.domain.user.QUser
 import zipbap.global.domain.user.User
+import java.time.Clock
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneId
 
 @Repository
 class FeedQueryRepositoryImpl(
-    private val queryFactory: JPAQueryFactory
+    private val queryFactory: JPAQueryFactory,
+    private val clock: Clock
 ) : FeedQueryRepository {
 
     private val recipe = QRecipe.recipe
@@ -187,10 +188,10 @@ class FeedQueryRepositoryImpl(
     }
 
     private fun todayCondition(): BooleanExpression {
-        val today = LocalDate.now(KST)
+        val today = LocalDate.now(clock.withZone(KST))
         val start = today.atStartOfDay()
-        val end = today.atTime(LocalTime.MAX)
-        return recipe.createdAt.between(start, end)
+        val end = today.plusDays(1).atStartOfDay()
+        return recipe.createdAt.goe(start).and(recipe.createdAt.lt(end))
     }
 
     private fun followingOnly(loginUser: User?): BooleanExpression =

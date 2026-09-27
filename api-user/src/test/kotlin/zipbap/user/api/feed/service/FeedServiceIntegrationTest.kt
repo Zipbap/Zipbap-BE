@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestPropertySource
+import support.FeedTestClockConfiguration
 import support.annotation.IntegrationTest
 import support.fixture.RecipeFixture
 import support.fixture.UserFixture
@@ -30,11 +31,13 @@ import zipbap.global.domain.like.RecipeLikeRepository
 import zipbap.global.domain.recipe.RecipeRepository
 import zipbap.global.domain.user.UserRepository
 import zipbap.user.api.feed.converter.FeedConverter
+import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 
 @IntegrationTest
-@Import(FeedService::class, FeedQueryRepositoryImpl::class)
+@Import(FeedService::class, FeedQueryRepositoryImpl::class, FeedTestClockConfiguration::class)
 @TestPropertySource(properties = [
     "spring.jpa.properties.hibernate.generate_statistics=true",
     "logging.level.org.hibernate.stat=OFF",
@@ -48,7 +51,8 @@ class FeedServiceIntegrationTest @Autowired constructor(
     private val recipeLikeRepository: RecipeLikeRepository,
     private val bookmarkRepository: BookmarkRepository,
     private val em: EntityManager,
-    private val jdbc: JdbcTemplate
+    private val jdbc: JdbcTemplate,
+    private val clock: Clock
 ) {
     private var viewerId = 0L
     private var authorId = 0L
@@ -82,7 +86,7 @@ class FeedServiceIntegrationTest @Autowired constructor(
         }
         em.flush()
         // Distinct timestamps prevent ranking ties and keep TODAY fixtures on the KST date.
-        val today = LocalDate.now(ZoneId.of("Asia/Seoul")).atTime(12, 0)
+        val today = LocalDate.now(clock.withZone(ZoneId.of("Asia/Seoul"))).atTime(12, 0)
         for (index in 1..52) {
             jdbc.update("UPDATE recipe SET created_at = ? WHERE id = ?", today.minusMinutes(index.toLong()), recipeId(index))
         }
@@ -183,6 +187,21 @@ class FeedServiceIntegrationTest @Autowired constructor(
         assertThat(statistics.prepareStatementCount).isEqualTo(3L)
         assertThat(page.content).isEmpty()
         assertThat(page.totalElements).isZero()
+    }
+
+    @Test
+    fun `TODAY includes the KST start and excludes the next midnight`() {
+        val start = LocalDateTime.of(2026, 9, 26, 0, 0)
+        val times = listOf(start.minusSeconds(1), start, start.plusHours(12), start.plusDays(1))
+        times.forEachIndexed { index, time ->
+            jdbc.update("UPDATE recipe SET created_at = ?, title = ? WHERE id = ?", time, "clock-boundary", recipeId(index + 1))
+        }
+        resetMeasurement()
+
+        val page = feedService.getFeedList(viewerId, FeedFilterType.TODAY, PageRequest.of(0, 20), "clock-boundary")
+
+        assertThat(page.content.map { it.recipeId }).containsExactly(recipeId(3), recipeId(2))
+        assertThat(page.totalElements).isEqualTo(2L)
     }
 
     @Test
