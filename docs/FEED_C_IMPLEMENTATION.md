@@ -2,9 +2,14 @@
 
 브랜치: `codex/feed-c-aggregate-split`. B 기준 커밋: `4090c14`.
 
+구현 완료. 최종 코드는 동점 정렬과 피드 size 상한까지 포함한다. **순수 집계 분리의 성능 비교 기준은 `b435947`**, 정렬·상한을 포함한 코드 기준은 `a59e3f5`다. 아래 C 핵심 측정과 최종 측정을 구분한다.
+
 ## 구현 범위
 
 - `325124f`: Clock 주입. 운영은 실제 시간, 테스트는 2026-09-26 기준. TODAY는 KST `[당일 00:00, 다음 날 00:00)`.
+- `b435947`: C 집계 분리와 회귀 검증.
+- `155e80a`: 검색 우선순위·순위 count·createdAt 뒤에 recipe ID DESC를 추가해 동점을 해소한다.
+- `a59e3f5`: 피드 서비스에서 size를 최대 50으로 제한한다. 기본 20 유지, 초과 요청과 내부 unpaged 호출은 50, offset·응답 size도 실제 크기를 사용한다. 공통 Pageable 설정과 마이페이지는 변경하지 않는다.
 - C 핵심: ALL/TODAY/FOLLOWING은 활동 JOIN 없이 페이지를 선택한 뒤 해당 ID의 좋아요·북마크·댓글을 각각 GROUP BY한다.
 - HOT/RECOMMEND는 전체 공개 후보에 순위 관계 하나만 LEFT JOIN한다. 순위를 계산한 뒤 페이지를 선택하고, 이미 계산한 count를 재사용한다.
 - 페이지 순서대로 count Map을 결합한다. 없는 활동은 0. B의 개인화 ID 일괄 조회 2회는 유지한다.
@@ -68,4 +73,37 @@ HOT/RECOMMEND에는 전체 후보 순위를 위한 filesort·임시 집계가 �
 
 ## 후속 구현·측정 구분
 
-집계 분리의 비교 기준 커밋을 남긴 뒤, 동점 정렬과 피드 전용 size 최대 50을 별도 커밋으로 적용한다. 변경 후 같은 생성 SQL의 실행계획을 다시 확인한다. 실제 JMeter 측정은 Mac → Windows Spring → Windows Docker MariaDB, 동일 경량 DB·로그 OFF·60초 워밍업 조건으로 진행한다. size20/u1, size20/u5를 우선하고 size10/u1·size30/u1을 보조로 수집한다. API 지연·처리량·DB CPU 시계열과 실행 커밋을 같이 기록한다.
+집계 분리, 동점 정렬, size 상한을 각각 커밋했다. 동점 정렬은 정적인 데이터의 페이지 경계를 안정화하며, 동시 등록·삭제에 따른 OFFSET 이동까지 해결하지는 않는다.
+
+### 최종 코드 재검증
+
+- global 59 + api-user 88 + api-admin 8 = **155개 테스트 통과**. 피드 통합 테스트는 45개다.
+- 동점 경계를 가로지르는 page0/page1/page2를 모든 필터에서 조회해 순서·중복·누락을 검사했다. size50/51/5000, 다음 페이지 offset, 내부 unpaged 호출도 검증했다.
+- 최종 JAR로 수집한 20개 HTTP 응답은 **A/B 각각 20/20 JSON 값과 배열 순서까지 일치**했다. JSON 객체 키 순서는 무시했다. 이번 데이터의 기존 A/B 동점 순서가 새 ID DESC 규칙과 일치한 결과이며, 다른 데이터에서도 이전의 미정의 동점 순서가 보존된다는 뜻은 아니다.
+- 실제 HTTP에서 size 생략 시 20, size50/51/1,000,000 요청 시 50을 확인했다. page1/size51은 page1/size50과 같은 응답·offset50이었다.
+- 경량 DB 읽기 전용 검증만 수행했고 최종 검증 서버도 종료했다.
+
+### 동점 정렬 이후 실행계획: filesort가 다시 생김
+
+최종 생성 SQL 22개에 같은 제한으로 EXPLAIN 1회·ANALYZE 3회를 다시 실행했다. **순수 C의 filesort 제거를 최종 코드의 결과로 인용하면 안 된다.**
+
+| 항목 | 최종 코드에서 관측한 결과 |
+| --- | --- |
+| ALL 페이지 시작 테이블 | recipe, `IDX_recipe_status_created` range |
+| recipe 실측 | r_rows=949, r_loops=1 |
+| filesort | createdAt DESC, id DESC; 출력 889행, 이후 author·category JOIN과 LIMIT |
+| ALL 페이지 시간 3회 | 2.3002 / 1.4559 / 1.3856ms |
+| ALL 8개 SQL 시간 합계 3회 | 3.5596 / 2.7528 / 2.5452ms |
+| HOT 페이지 시간 3회 | 12.7993 / 7.0843 / 8.3118ms |
+| RECOMMEND 페이지 시간 3회 | 5.9408 / 6.0915 / 5.6722ms |
+| 디스크 임시 테이블 | Created_tmp_disk_tables=0 |
+
+`SHOW INDEX`와 V1 마이그레이션에서 기존 복합 인덱스는 `(recipe_status ASC, created_at DESC)`로 확인했다. 최종 정렬의 `id DESC`는 명시적으로 포함되어 있지 않으며, 현재 옵티마이저는 추가 filesort를 선택했다. 활동 조합 48,784행의 정렬·집계는 제거됐지만, recipe 자체의 추가 정렬 비용은 남는다. 카테고리 테이블부터 시작하는 문제는 아니다. 이 단계에서는 인덱스나 스키마를 바꾸지 않았다. 후속으로 `(recipe_status, created_at DESC, id DESC)` 접근 경로를 별도 실험할 수 있다.
+
+최종 결과는 `build/feed-benchmark/C-final/`에 있다: `test-results.json`, `response-comparison.json`, `size-contract.json`, `sql-counts.json`, `queries.json`, `EXPLAIN_ANALYZE.sql`, `EXPLAIN_ANALYZE.out`, `plans.json`, `plan-summary.json`, `build-metadata.json`. HTTP 원문은 `build/feed-benchmark/responses/C/final-20260927`에 있다.
+
+### 다음 실험
+
+실제 JMeter 측정은 Mac → Windows Spring → Windows Docker MariaDB, 동일 경량 DB·로그 OFF·60초 워밍업 조건으로 진행한다. size20/u1, size20/u5를 우선하고 size10/u1·size30/u1을 보조로 수집한다. API 지연·처리량·DB CPU 시계열과 실행 커밋을 같이 기록한다.
+
+집계 분리만 A/B와 비교하는 C 기준은 `b435947`이다. 현재 최신 코드는 동점 정렬 때문에 실행계획도 달라지므로 최종 코드 결과를 별도 실행으로 구분한다. 원본 A/B와 같은 데이터·자원 설정을 유지하고, 결과를 섞어 하나의 개선율로 보고하지 않는다. JMeter의 최종 p95/p99·처리량 개선율과 stress 1k의 제한된 단일 요청 비교는 아직 측정하지 않았다.
