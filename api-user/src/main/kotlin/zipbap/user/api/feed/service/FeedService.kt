@@ -14,7 +14,6 @@ import zipbap.global.domain.feed.FeedFilterType
 import zipbap.global.domain.feed.FeedQueryRepository
 import zipbap.global.domain.like.RecipeLikeRepository
 import zipbap.global.domain.recipe.RecipeRepository
-import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.code.status.ErrorStatus
 import zipbap.global.global.exception.GeneralException
@@ -49,22 +48,16 @@ class FeedService(
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
-        if (filter == FeedFilterType.FOLLOWING && loginUser == null) {
-            throw GeneralException(ErrorStatus.UNAUTHORIZED)
-        }
-
         val page = feedQueryRepository.findFeed(loginUser, filter, pageable, condition)
+        val recipeIds = page.content.mapNotNull { it.recipeId }.distinct()
+        val likedRecipeIds = if (recipeIds.isEmpty()) emptySet() else
+            recipeLikeRepository.findRecipeIdsByUserIdAndRecipeIdIn(loginUserId, recipeIds).toSet()
+        val bookmarkedRecipeIds = if (recipeIds.isEmpty()) emptySet() else
+            bookmarkRepository.findRecipeIdsByUserIdAndRecipeIdIn(loginUserId, recipeIds).toSet()
 
         val content = page.content.map { row ->
-
-            if (loginUser != null && row.recipeId != null) {
-                val recipe = recipeRepository.findById(row.recipeId).orElse(null)
-                if (recipe != null) {
-                    row.isLiked = recipeLikeRepository.existsByUserAndRecipe(loginUser, recipe)
-                    row.isBookmarked = bookmarkRepository.existsByUserAndRecipe(loginUser, recipe)
-                }
-            }
-
+            row.isLiked = row.recipeId in likedRecipeIds
+            row.isBookmarked = row.recipeId in bookmarkedRecipeIds
             FeedConverter.toFeedItemDto(row)
         }
 
