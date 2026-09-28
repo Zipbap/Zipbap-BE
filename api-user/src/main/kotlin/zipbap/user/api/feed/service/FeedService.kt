@@ -3,6 +3,7 @@ package zipbap.user.api.feed.service
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +15,6 @@ import zipbap.global.domain.feed.FeedFilterType
 import zipbap.global.domain.feed.FeedQueryRepository
 import zipbap.global.domain.like.RecipeLikeRepository
 import zipbap.global.domain.recipe.RecipeRepository
-import zipbap.global.domain.user.User
 import zipbap.global.domain.user.UserRepository
 import zipbap.global.global.code.status.ErrorStatus
 import zipbap.global.global.exception.GeneralException
@@ -35,6 +35,9 @@ class FeedService(
         private val recipeLikeRepository: RecipeLikeRepository,
         private val publisher: ApplicationEventPublisher, private val userRepository: UserRepository
 ) {
+    private companion object {
+        const val MAX_FEED_PAGE_SIZE = 50
+    }
 
     /**
      * Feed는 삭제 가능성이 있으므로 user -> userId로 인한 변경을 최소화 하여 돌아갈 정도만 수정
@@ -49,26 +52,27 @@ class FeedService(
             GeneralException(ErrorStatus.USER_NOT_FOUND)
         }
 
-        if (filter == FeedFilterType.FOLLOWING && loginUser == null) {
-            throw GeneralException(ErrorStatus.UNAUTHORIZED)
+        // Bound both the page query and subsequent IN queries, including non-HTTP callers.
+        val effectivePageable = when {
+            pageable.isUnpaged -> PageRequest.of(0, MAX_FEED_PAGE_SIZE)
+            pageable.pageSize > MAX_FEED_PAGE_SIZE ->
+                PageRequest.of(pageable.pageNumber, MAX_FEED_PAGE_SIZE, pageable.sort)
+            else -> pageable
         }
-
-        val page = feedQueryRepository.findFeed(loginUser, filter, pageable, condition)
+        val page = feedQueryRepository.findFeed(loginUser, filter, effectivePageable, condition)
+        val recipeIds = page.content.mapNotNull { it.recipeId }.distinct()
+        val likedRecipeIds = if (recipeIds.isEmpty()) emptySet() else
+            recipeLikeRepository.findRecipeIdsByUserIdAndRecipeIdIn(loginUserId, recipeIds).toSet()
+        val bookmarkedRecipeIds = if (recipeIds.isEmpty()) emptySet() else
+            bookmarkRepository.findRecipeIdsByUserIdAndRecipeIdIn(loginUserId, recipeIds).toSet()
 
         val content = page.content.map { row ->
-
-            if (loginUser != null && row.recipeId != null) {
-                val recipe = recipeRepository.findById(row.recipeId).orElse(null)
-                if (recipe != null) {
-                    row.isLiked = recipeLikeRepository.existsByUserAndRecipe(loginUser, recipe)
-                    row.isBookmarked = bookmarkRepository.existsByUserAndRecipe(loginUser, recipe)
-                }
-            }
-
+            row.isLiked = row.recipeId in likedRecipeIds
+            row.isBookmarked = row.recipeId in bookmarkedRecipeIds
             FeedConverter.toFeedItemDto(row)
         }
 
-        return PageImpl(content, pageable, page.totalElements)
+        return PageImpl(content, effectivePageable, page.totalElements)
     }
 
     fun getFeedDetail(
