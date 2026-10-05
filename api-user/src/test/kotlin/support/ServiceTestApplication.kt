@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import zipbap.global.global.config.QueryDslConfig
+import zipbap.global.global.config.ClockConfig
 import zipbap.user.api.user.service.UserService
 import zipbap.user.api.file.service.FileService
 import zipbap.user.api.recipe.validator.CategoryValidator
@@ -15,5 +16,5 @@ import zipbap.user.api.recipe.validator.CategoryValidator
 @EnableAutoConfiguration(excludeName = ["io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration"])
 @EntityScan("zipbap.global")
 @EnableJpaRepositories("zipbap.global")
-@Import(TestAuditingConfiguration::class, QueryDslConfig::class, UserService::class, FileService::class, CategoryValidator::class)
+@Import(TestAuditingConfiguration::class, QueryDslConfig::class, ClockConfig::class, UserService::class, FileService::class, CategoryValidator::class)
 class ServiceTestApplication

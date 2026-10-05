@@ -43,15 +43,16 @@ interface FeedDocs {
   - 예: `page=0` → 첫 페이지, `page=1` → 두 번째 페이지  
 
 - **size (int, query)**  
-  - 한 페이지에 가져올 데이터 개수 (기본값: 20)  
+  - 한 페이지에 가져올 데이터 개수 (기본값: 20, 최대: 50)
+  - 50을 초과하면 50으로 제한하며 응답의 size와 페이지 위치에도 적용됩니다.
   - 예: `size=10` → 10개씩 불러오기  
 
 - **sort (array, query)**  
-  - 정렬 조건 (기본값: `createdAt,desc`)  
-  - 형식: `property,(asc|desc)`  
-  - 예: `sort=createdAt,desc` → 최신순  
-  - 예: `sort=likeCount,desc` → 좋아요 많은 순  
-  - 여러 조건 가능 → `sort=likeCount,desc&sort=createdAt,desc` 
+  - 이 API는 sort 입력 대신 filter에 정해진 정렬을 사용합니다.
+  - ALL/TODAY/FOLLOWING: createdAt DESC → recipeId DESC
+  - HOT: 좋아요 수 DESC → createdAt DESC → recipeId DESC
+  - RECOMMEND: 북마크 수 DESC → createdAt DESC → recipeId DESC
+  - 검색 시 제목·소제목·재료 일치 우선순위가 위 정렬보다 먼저 적용됩니다.
 - **condition (string, query)**
     - 검색 조건
     - 제목, 소제목, 재료에서 해당 condition이 들어간 대상 검색

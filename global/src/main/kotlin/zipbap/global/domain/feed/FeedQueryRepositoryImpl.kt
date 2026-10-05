@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 import zipbap.global.domain.bookmark.QBookmark
+import zipbap.global.domain.category.cookingtime.QCookingTime
+import zipbap.global.domain.category.level.QLevel
 import zipbap.global.domain.comment.QComment
 import zipbap.global.domain.feed.FeedQueryResult.FeedDetailRow
 import zipbap.global.domain.feed.FeedQueryResult.FeedListRow
@@ -22,13 +24,14 @@ import zipbap.global.domain.recipe.QRecipe
 import zipbap.global.domain.recipe.RecipeVisibility
 import zipbap.global.domain.user.QUser
 import zipbap.global.domain.user.User
+import java.time.Clock
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneId
 
 @Repository
 class FeedQueryRepositoryImpl(
-    private val queryFactory: JPAQueryFactory
+    private val queryFactory: JPAQueryFactory,
+    private val clock: Clock
 ) : FeedQueryRepository {
 
     private val recipe = QRecipe.recipe
@@ -37,6 +40,8 @@ class FeedQueryRepositoryImpl(
     private val bookmark = QBookmark.bookmark
     private val comment = QComment.comment
     private val follow = QFollow.follow
+    private val cookingTime = QCookingTime("feedCookingTime")
+    private val level = QLevel("feedLevel")
 
     private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 
@@ -67,12 +72,15 @@ class FeedQueryRepositoryImpl(
         if (priority != null) orderSpecifiers += priority.desc()
 
         when (filter) {
-            FeedFilterType.HOT -> orderSpecifiers += arrayOf(like.id.countDistinct().desc(), recipe.createdAt.desc())
-            FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.id.countDistinct().desc(), recipe.createdAt.desc())
+            FeedFilterType.HOT -> orderSpecifiers += arrayOf(like.id.count().desc(), recipe.createdAt.desc())
+            FeedFilterType.RECOMMEND -> orderSpecifiers += arrayOf(bookmark.id.count().desc(), recipe.createdAt.desc())
             else -> orderSpecifiers += arrayOf(recipe.createdAt.desc())
         }
+        // A unique final key keeps ties stable across OFFSET page boundaries on unchanged data.
+        orderSpecifiers += recipe.id.desc()
 
-        val content = queryFactory
+        // Rank over every visible candidate before LIMIT. Join only the relation used for ranking.
+        val pageQuery = queryFactory
             .select(
                 QFeedListRow(
                     author.id,
@@ -83,13 +91,13 @@ class FeedQueryRepositoryImpl(
                     recipe.title,
                     recipe.thumbnail,
                     recipe.introduction,
-                    recipe.cookingTime.cookingTime,
-                    recipe.level.level,
+                    cookingTime.cookingTime,
+                    level.level,
                     recipe.createdAt,
                     recipe.updatedAt,
-                    like.id.countDistinct(),
-                    bookmark.id.countDistinct(),
-                    comment.id.countDistinct(),
+                    if (filter == FeedFilterType.HOT) like.id.count() else Expressions.asNumber(0L),
+                    if (filter == FeedFilterType.RECOMMEND) bookmark.id.count() else Expressions.asNumber(0L),
+                    Expressions.asNumber(0L),
                     Expressions.FALSE,
                     Expressions.FALSE,
                     recipe.isPrivate,
@@ -98,11 +106,20 @@ class FeedQueryRepositoryImpl(
             )
             .from(recipe)
             .join(recipe.user, author)
-            .leftJoin(like).on(like.recipe.eq(recipe))
-            .leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
-            .leftJoin(comment).on(comment.recipe.eq(recipe))
+            // Preserve the previous projection's implicit inner-join eligibility before pagination.
+            .join(recipe.cookingTime, cookingTime)
+            .join(recipe.level, level)
             .where(where)
-            .groupBy(recipe.id, author.id)
+
+        when (filter) {
+            FeedFilterType.HOT -> pageQuery.leftJoin(like).on(like.recipe.eq(recipe))
+                .groupBy(recipe.id, author.id)
+            FeedFilterType.RECOMMEND -> pageQuery.leftJoin(bookmark).on(bookmark.recipe.eq(recipe))
+                .groupBy(recipe.id, author.id)
+            else -> Unit
+        }
+
+        val rows = pageQuery
             .orderBy(*orderSpecifiers.toTypedArray())
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
@@ -115,7 +132,42 @@ class FeedQueryRepositoryImpl(
             .where(where)
             .fetchOne() ?: 0L
 
+        val recipeIds = rows.mapNotNull { it.recipeId }
+        if (recipeIds.isEmpty()) return PageImpl(emptyList(), pageable, total)
+
+        // Page-bounded aggregates avoid the likes x bookmarks x comments intermediate result.
+        val likeCounts = if (filter == FeedFilterType.HOT) emptyMap() else countLikes(recipeIds)
+        val bookmarkCounts = if (filter == FeedFilterType.RECOMMEND) emptyMap() else countBookmarks(recipeIds)
+        val commentCounts = countComments(recipeIds)
+        val content = rows.map { row ->
+            row.copy(
+                likeCount = if (filter == FeedFilterType.HOT) row.likeCount else likeCounts[row.recipeId] ?: 0L,
+                bookmarkCount = if (filter == FeedFilterType.RECOMMEND) row.bookmarkCount else bookmarkCounts[row.recipeId] ?: 0L,
+                commentCount = commentCounts[row.recipeId] ?: 0L
+            )
+        }
         return PageImpl(content, pageable, total)
+    }
+
+    private fun countLikes(recipeIds: List<String>): Map<String, Long> {
+        val count = like.id.count()
+        return queryFactory.select(like.recipe.id, count).from(like)
+            .where(like.recipe.id.`in`(recipeIds)).groupBy(like.recipe.id).fetch()
+            .associate { it.get(like.recipe.id)!! to it.get(count)!! }
+    }
+
+    private fun countBookmarks(recipeIds: List<String>): Map<String, Long> {
+        val count = bookmark.id.count()
+        return queryFactory.select(bookmark.recipe.id, count).from(bookmark)
+            .where(bookmark.recipe.id.`in`(recipeIds)).groupBy(bookmark.recipe.id).fetch()
+            .associate { it.get(bookmark.recipe.id)!! to it.get(count)!! }
+    }
+
+    private fun countComments(recipeIds: List<String>): Map<String, Long> {
+        val count = comment.id.count()
+        return queryFactory.select(comment.recipe.id, count).from(comment)
+            .where(comment.recipe.id.`in`(recipeIds)).groupBy(comment.recipe.id).fetch()
+            .associate { it.get(comment.recipe.id)!! to it.get(count)!! }
     }
 
     override fun findFeedDetail(
@@ -187,10 +239,10 @@ class FeedQueryRepositoryImpl(
     }
 
     private fun todayCondition(): BooleanExpression {
-        val today = LocalDate.now(KST)
+        val today = LocalDate.now(clock.withZone(KST))
         val start = today.atStartOfDay()
-        val end = today.atTime(LocalTime.MAX)
-        return recipe.createdAt.between(start, end)
+        val end = today.plusDays(1).atStartOfDay()
+        return recipe.createdAt.goe(start).and(recipe.createdAt.lt(end))
     }
 
     private fun followingOnly(loginUser: User?): BooleanExpression =
